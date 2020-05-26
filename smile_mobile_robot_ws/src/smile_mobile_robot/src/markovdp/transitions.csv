@@ -1,0 +1,6 @@
+stopped, lanes_detected, follow_lanes
+follow_lanes, stop_sign_detected, stop_stop_sign
+follow_lanes, red_stoplight_detected, stop_stop_light
+stop_stop_sign, safe_cross, cross_intersection
+stop_stop_light, safe_cross_and_green_stoplight_detected, cross_intersection
+cross_intersection, lanes_detected, follow_lanes
