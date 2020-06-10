@@ -1,0 +1,15 @@
+<launch>
+
+  <!--Robot configuration file (must be loaded to run the following)-->
+  <rosparam file="$(find smile_mobile_robot)/config/smile_physical_robot.yaml" command="load"/>
+
+  <!--Launch the Odometry estimator and keyboard teleop control-->
+  <group ns="smile">
+    <node name="raw_odometry" pkg="smile_mobile_robot" type="raw_odometry.py"/>
+        
+    <node name="keyboard_teleop" pkg="smile_mobile_robot" type="keyboard_teleop.py"/>
+    <node name="hardware_interface" pkg="smile_mobile_hardware" type="hardware_interface.py"/>
+ 
+ </group>
+
+</launch>

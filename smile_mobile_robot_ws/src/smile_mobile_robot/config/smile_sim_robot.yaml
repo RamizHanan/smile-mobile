@@ -7,7 +7,7 @@ vehicle_params: {vehicle_width: 0.6858, wheel_radius: 0.20574}
 
 vision_params:
   lane_detector:
-    sobel_x_thresh: [70, 255]
+    sobel_x_thresh: [30, 255]
     sat_thresh: [10, 255]
     num_windows: 9
     margin: 150
@@ -16,7 +16,10 @@ vision_params:
     center_line_region: [50, 50]
     src_roi: [[0.35, 0.60], [0.65, 0.60], [0, 0.8], [1, 0.8]]
     img_size: [800, 800]
-    min_lane_candidate_pix: 10000
+    min_lane_candidate_pix: 7000
+    num_trajectory_points: 4
+    meter_per_pixel: 0.0031
+    vertical_pixel_offset: 403
 
   lane_follower:
     pid:

@@ -12,7 +12,7 @@ import pickle
 import matplotlib.pyplot as plt
 import rospy
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, MultiArrayLayout, MultiArrayDimension
 from cv_bridge import CvBridge, CvBridgeError
 
 class Lane_Detector():
@@ -37,6 +37,8 @@ class Lane_Detector():
         self.center_line = 400 #The line to plot the trajectory point.(with respect to topdown view)
         self.center_line_region = [50, 50] #The number of vertical pixels above and below the center line.
         self.min_lane_candidate_pix = 14000 #The number of possible pixels on the left and right side that helps validate there is a likely lane.
+        self.num_trajectory_points = 3
+        self.img_size=[800, 800]
 
 
     def calibrate_camera(self, grid_count_h, grid_count_v, cal_save_file):
@@ -257,7 +259,7 @@ class Lane_Detector():
         combined_binary = np.zeros_like(sobel_x_binary)
         combined_binary[(sobel_x_binary == 1) | (sat_binary == 1)] = 1
 
-        return(sobel_x_binary)
+        return(combined_binary)
 
     def histogram(self, img):
         '''
@@ -292,13 +294,15 @@ class Lane_Detector():
         #find the columns in the img that have the peaks in the histogram
         #Most likely candidate positions for lane
         midpoint = int(histogram.shape[0]/2)
-        num_left_candidate_pixels = np.sum(histogram[:midpoint])
-        num_right_candidate_pixels = np.sum(histogram[midpoint:])
+        num_left_candidate_pixels = np.sum(histogram[:(midpoint)])
+        num_right_candidate_pixels = np.sum(histogram[(midpoint):])
+        print(num_left_candidate_pixels, num_right_candidate_pixels)
         if(num_left_candidate_pixels < self.min_lane_candidate_pix or num_right_candidate_pixels < self.min_lane_candidate_pix):
+
             return(False, None, None, None, None)
 
-        left_peak_column = np.argmax(histogram[:midpoint])
-        right_peak_column = np.argmax(histogram[midpoint:]) + midpoint
+        left_peak_column = np.argmax(histogram[:(midpoint)])
+        right_peak_column = np.argmax(histogram[(midpoint):]) + midpoint
 
 
         #Set the window height
@@ -424,7 +428,7 @@ class Lane_Detector():
         cv2.fillPoly(color_img, np.int_(points), (51, 255, 51))
 
         #Get the center line trajectory
-        center_fit, center_point = self.get_trajectory_point(left_fit, right_fit)
+        center_fit, _, center_point = self.get_trajectory_point(left_fit, right_fit)
         center = np.array([np.transpose(np.vstack([center_fit, plot_y]))])
         cv2.polylines(color_img, np.int_(center), isClosed=False, color=(255, 0, 0), thickness=3)
 
@@ -434,6 +438,7 @@ class Lane_Detector():
         color_img = self.draw_vehicle_trajectory_line(color_img, self.center_line)
 
         out_img = self._inv_perspective_warp(color_img)
+
         out_img = cv2.addWeighted(img, 1, out_img, 0.7, 0)
 
         return(out_img)
@@ -480,13 +485,18 @@ class Lane_Detector():
 
         center_point = np.mean((left_fit_in_center + right_fit_in_center) / 2.0)
 
+        #Extract n number of points along the center line for trajectory planning
+        pixels_horiz = center_fit[np.round(np.linspace(0, len(center_fit)-1, self.num_trajectory_points)).astype(int)]
+        pixels_vert = np.round(np.linspace(0, len(center_fit)-1, self.num_trajectory_points)).astype(int)
 
-        return center_fit, int(center_point)
+        #Get the relative from the center of the vehicle to the point.
+        relative_horiz_dist = (pixels_horiz - (self.img_size[1]//2)) * self.meter_per_pixel
+        relative_vert_dist = (pixels_vert + self.vertical_pixel_offset) * self.meter_per_pixel
 
+        #Array holding the pixels as (x, y) corrdinates
+        trajectory_pixels = np.transpose(np.vstack([relative_vert_dist, relative_horiz_dist]))
 
-
-
-
+        return center_fit, trajectory_pixels, int(center_point)
 
     def detect(self, img):
         '''
@@ -502,7 +512,7 @@ class Lane_Detector():
         #Change the perspective to have a pseudo "top-down" view of the lanes
         warped_img = self._perspective_warp(img)
 
-         #Binarized the image using sobel filters to identify most probale regions for the lane
+        #Binarized the image using sobel filters to identify most probale regions for the lane
         binary_img = self.binarize_img(warped_img)
 
         #return(warped_img)
@@ -513,10 +523,10 @@ class Lane_Detector():
         if(ret == True):
             #Draw the lane region on a new colored picture.
             final_img = self.draw_lanes(img, curves[0], curves[1])
-            _, center_point = self.get_trajectory_point(curves[0], curves[1])
-            return ret, final_img, center_point
+            center_fit, trajectory_pixels, center_point = self.get_trajectory_point(curves[0], curves[1])
+            return ret, final_img, trajectory_pixels, center_point
 
-        return False, img, None
+        return False, img, None, None
 
 class Lane_Detection_ROS():
     """
@@ -538,7 +548,7 @@ class Lane_Detection_ROS():
 
         #TOPICS
         camera_topic = rospy.get_namespace() + 'camera1/image_raw'
-        lane_tracking_topic = rospy.get_namespace() + 'lane_tracking'
+        lane_tracking_topic = rospy.get_namespace() + 'lane_detection'
 
         #Subscriber to the image data coming from the robot
         self.camera_sub = rospy.Subscriber(camera_topic, Image, self._camera_callback)
@@ -571,10 +581,13 @@ class Lane_Detection_ROS():
         param_path = '/vision_params/lane_detector/'
 
         self.img_size = rospy.get_param(param_path + 'img_size')
+        self.lane_detector.img_size = self.img_size
 
         #Generate a blank image
         self.img = np.ones((self.img_size[0], self.img_size[1], 3), np.uint8)
 
+        #Initialize the lane detector parameters.
+        #Necessary parameters for the lane detector.
         self.lane_detector.sobel_x_thresh = rospy.get_param(param_path + 'sobel_x_thresh')
         self.lane_detector.sat_thresh = rospy.get_param(param_path + 'sat_thresh')
         self.lane_detector.num_windows = rospy.get_param(param_path + 'num_windows')
@@ -582,11 +595,29 @@ class Lane_Detection_ROS():
         self.center_line = rospy.get_param(param_path + 'center_line')
         self.lane_detector.center_line = self.center_line
         self.lane_detector.center_line_region = rospy.get_param(param_path + 'center_line_region')
+        self.lane_detector.num_trajectory_points = rospy.get_param(param_path + 'num_trajectory_points')
+        self.lane_detector.meter_per_pixel = rospy.get_param(param_path + 'meter_per_pixel')
+        self.lane_detector.vertical_pixel_offset = rospy.get_param(param_path + 'vertical_pixel_offset')
         src_roi = rospy.get_param(param_path + 'src_roi')
         self.src_roi = np.float32(src_roi)
         self.lane_detector.src_roi = self.src_roi
 
+        #Initialize the transformation matrix to be able to get a "top-down" view of the road
         self.lane_detector._initialize_perspective_warp(self.img_size, self.img_size, self.src_roi)
+
+        #Initialize the lane detector message to be published.
+        #This contains the relative x and y points to the vehicle to stay on the
+        #lane.
+        self.lane_detector_msg = Float32MultiArray()
+        lane_detection_msg_layout = MultiArrayLayout()
+        lane_detection_msg_layout.dim.append(MultiArrayDimension())
+        lane_detection_msg_layout.dim.append(MultiArrayDimension())
+        lane_detection_msg_layout.dim[0].size = self.lane_detector.num_trajectory_points
+        lane_detection_msg_layout.dim[0].stride = self.lane_detector.num_trajectory_points
+        lane_detection_msg_layout.dim[1].size = 2
+        lane_detection_msg_layout.dim[1].stride =2
+        self.lane_detection_msg.layout = lane_detection_msg_layout
+
 
     def _camera_callback(self, img_msg):
         '''
@@ -616,28 +647,20 @@ class Lane_Detection_ROS():
         try:
             while not rospy.is_shutdown():
 
-                ret, lane_detect_img, center_point = self.lane_detector.detect(self.img)
-                #roi = self.lane_detector.show_roi(self.img)
-                #cv2.imshow("ROI", roi)
-                #warped = self.lane_detector._perspective_warp(self.img)
-                #binary = self.lane_detector.binarize_img(warped)
-                #cv2.imshow("Binary", binary*255)
+                #Center fit is the polynomial describing the lane.
+
+                ret, lane_detect_img, trajectory_points, center_point = self.lane_detector.detect(self.img)
 
                 show_img = self.img
-
-                #The data need to perform lane following.
-                #[valid_lane_bool, center_of_camera_trajector_line, center_point_of_lane_detected]
-                lane_tracking_msg = Float32MultiArray()
-                lane_tracking_msg.data = [0, 0.0, 0]
-
 
                 #If a valid lane is detected
                 if(ret):
                     show_img = lane_detect_img
-                    lane_tracking_msg.data = [1, self.img_size[1]//2, center_point]
-
-                #Publish the lane tracking information to follow the lane
-                self.lane_tracking_pub.publish(lane_tracking_msg)
+            
+                    trajectory_points = trajectory_points.reshape(trajectory_points.size, -1).flatten()
+                    lane_detection_msg.data = trajectory_points.tolist()
+                    #Publish the lane tracking information to follow the lane
+                    self.lane_tracking_pub.publish(lane_detection_msg)
 
                 cv2.imshow("Lane Detection", self.lane_detector.show_roi(show_img))
 
