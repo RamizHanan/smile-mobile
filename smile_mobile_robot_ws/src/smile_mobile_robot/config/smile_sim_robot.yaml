@@ -30,3 +30,9 @@ vision_params:
       integral_max: 100
       max_control_effort: 1.0
       min_control_effort: -1.0
+
+motion_planner_params:
+  max_velocity: 0.5
+  success_pos_tolerance: 0.1
+  success_pos_timeout: 10
+  relative_angle_limit: 0.78539

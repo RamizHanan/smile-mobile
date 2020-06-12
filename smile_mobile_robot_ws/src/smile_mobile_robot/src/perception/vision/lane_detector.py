@@ -608,7 +608,7 @@ class Lane_Detection_ROS():
         #Initialize the lane detector message to be published.
         #This contains the relative x and y points to the vehicle to stay on the
         #lane.
-        self.lane_detector_msg = Float32MultiArray()
+        self.lane_detection_msg = Float32MultiArray()
         lane_detection_msg_layout = MultiArrayLayout()
         lane_detection_msg_layout.dim.append(MultiArrayDimension())
         lane_detection_msg_layout.dim.append(MultiArrayDimension())
@@ -656,11 +656,11 @@ class Lane_Detection_ROS():
                 #If a valid lane is detected
                 if(ret):
                     show_img = lane_detect_img
-            
+
                     trajectory_points = trajectory_points.reshape(trajectory_points.size, -1).flatten()
-                    lane_detection_msg.data = trajectory_points.tolist()
+                    self.lane_detection_msg.data = trajectory_points.tolist()
                     #Publish the lane tracking information to follow the lane
-                    self.lane_tracking_pub.publish(lane_detection_msg)
+                    self.lane_tracking_pub.publish(self.lane_detection_msg)
 
                 cv2.imshow("Lane Detection", self.lane_detector.show_roi(show_img))
 
