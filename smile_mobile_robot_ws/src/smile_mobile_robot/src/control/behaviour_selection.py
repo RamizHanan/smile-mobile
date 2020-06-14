@@ -8,6 +8,10 @@ Descripion: Main decision module for controlling the vehcile to reach goals give
 import rospy
 from smile_mobile_robot.srv import mode_select, mode_selectResponse
 from std_msgs.msg import Float32MultiArray
+import numpy as np
+from Queue import Queue
+import actionlib
+from smile_mobile_robot.msg import motionAction, motionActionGoal, motionActionFeedback, motionActionResult
 
 class Behaviour_Selector:
     '''
@@ -28,7 +32,7 @@ class Behaviour_Selector:
         #   unpaved_navigation (2): Use reinforcement learning the navigate unpaced environment
         #   manual 1 (3): Manual control of the vehicle through raw PWM values.
         #   manual 2 (4): Manual control with movement controller PIDs.
-        self.mode = 0
+        self.mode = 1
 
         #Service for a request to change modes.
         rospy.Service('mode_select', mode_select, self._mode_select_server)
@@ -40,6 +44,17 @@ class Behaviour_Selector:
         self.valid_lane_detected = False
         self.center_lane_poly_coeffs = [0.0, 0.0, 0.0] #The coefficients describing the center lane polynomial
         rospy.Subscriber(lane_detection_topic, Float32MultiArray, self._lane_detection_subscriber_callback)
+        self.num_trajectory_points = rospy.get_param('/vision_params/lane_detector/num_trajectory_points')
+
+        self.relative_pos_queue = Queue(1)
+
+        #Motion action msg. Send desired relative motion to the motion controller.
+        self.motion_action_goal = motionActionGoal()
+        self.action_name = rospy.get_namespace() + 'motion_action'
+        self.motion_action_client = actionlib.SimpleActionClient(self.action_name, motionAction)
+
+        #Wait for the action server to get started
+        self.motion_action_client.wait_for_server()
 
         #Behaviour_Selector looping frequnecy
         self.rate = rospy.Rate(100)
@@ -90,19 +105,6 @@ class Behaviour_Selector:
             return_msg.success = False; return_msg.message = "FAILED"
             return return_msg
 
-
-    def get_lane_path(self, lane_detection_params):
-        '''
-        Get the lane path (positions and orientations) from the lane detection
-        results.
-
-        Parameters:
-            lane_detection_params: The parameters received from the lane detector.
-                    About the trajector of the lane.
-        Return
-            A tuple of the (x, y, yaw) Path to drive on the lane.
-        '''
-
     def _lane_detection_subscriber_callback(self, lane_detection_msg):
         '''
         Callback function for the lane detection message from the lane
@@ -113,8 +115,19 @@ class Behaviour_Selector:
         Returns:
             N/A
         '''
+        #Read the lane detection message
+        center_lane_points_flattened = np.array(lane_detection_msg.data)
+        center_lane_points = center_lane_points_flattened.reshape(self.num_trajectory_points, 2)
 
-        
+        motion_goal = motionActionGoal()
+        motion_goal.goal.x = center_lane_points[1, 0]
+        motion_goal.goal.y = -1*center_lane_points[1, 1]
+        motion_goal.goal.velocity = 1.0
+
+        #Place as an action goal
+        self.relative_pos_queue.put(motion_goal.goal)
+
+
     def run(self):
         '''
         Main loop to run the behaviour selector module
@@ -127,7 +140,16 @@ class Behaviour_Selector:
         try:
             while not rospy.is_shutdown():
 
-                self.rate.sleep()
+                if(True):
+                    if( not self.relative_pos_queue.empty()):
+                        motion_goal = self.relative_pos_queue.get()
+                        print(motion_goal)
+                        self.motion_action_client.send_goal(motion_goal)
+
+                        motion_action_result = self.motion_action_client.get_result()
+                        print(motion_action_result)
+                else:
+                    self.rate.sleep()
         except rospy.ROSInterruptException:
             rospy.loginfo("[WARNING]: Behaviour Selector Interurupted.Shutting Down")
 

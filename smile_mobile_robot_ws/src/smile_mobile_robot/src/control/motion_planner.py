@@ -101,11 +101,17 @@ class Motion_Planner:
         Returns:
             N/A
         '''
-        rospy.loginfo("Received Waypoint (X:%0.2f, Y:%0.2f, vel:%0.2f)" % (goal.X, goal.Y, goal.velocity))
+        rospy.loginfo("Received Waypoint (X:%0.2f, Y:%0.2f, vel:%0.2f)" % (goal.x, goal.y, goal.velocity))
 
         dist = 10000.0
         timer = 0.0
         timer_start_time = (rospy.Time.now()).secs
+
+        #Since this module receives the relative x and y to go to, translate those into the
+        #global X and Y.
+        goal_X = self.X + (goal.x * math.cos(self.yaw) - goal.y*math.sin(self.yaw))
+        goal_Y = self.Y + (goal.x * math.sin(self.yaw) + goal.y* math.cos(self.yaw))
+        print("(%0.2f, %0.2f)", goal_X, goal_Y)
 
         while(True):
             timer = (rospy.Time.now()).secs - timer_start_time
@@ -116,7 +122,7 @@ class Motion_Planner:
                 break
 
             #Get the distance between the two points (as the crow flies)
-            dist = math.sqrt((self.X - goal.X)**2 + (self.Y - goal.Y)**2)
+            dist = math.sqrt((self.X - goal_X)**2 + (self.Y - goal_Y)**2)
 
             #TODO: Add a catch here if the distance is too far for the short
             #movement.
@@ -130,12 +136,14 @@ class Motion_Planner:
             robot_direction_vect = np.array([math.cos(self.yaw), math.sin(self.yaw)])
 
             #Get the vector representing the
-            dest_direction_vect = np.array([(goal.X - self.X), (goal.Y - self.Y)])
+            dest_direction_vect = np.array([(goal_X - self.X), (goal_Y - self.Y)])
             dot_prod = np.dot(robot_direction_vect, dest_direction_vect)
             norm_mult = np.linalg.norm(robot_direction_vect) * np.linalg.norm(dest_direction_vect)
 
             #TODO: Catch if the angle is to large
             relative_angle = math.acos(dot_prod / norm_mult)
+            if(goal.y < 0):
+                relative_angle *= -1
 
             if(abs(relative_angle) > self.relative_angle_limit):
                 rospy.loginfo("FAIL: RELATIVE ANGLE ADJUSTMENT BEYONE SET LIMIT")
