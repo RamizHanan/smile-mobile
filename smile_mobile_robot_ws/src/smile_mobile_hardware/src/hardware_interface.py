@@ -57,7 +57,7 @@ while not rospy.is_shutdown():
             accel_z = ser.read(4)
             accel_z = struct.unpack('<f', accel_z)[0]
             heading = ser.read(4)
-            heading = struct.unpack('<f', mag_x)[0]
+            heading = struct.unpack('<f', heading)[0]
             gyro_x = ser.read(4)
             gyro_x = struct.unpack('<f', gyro_x)[0]
             gyro_y = ser.read(4)
