@@ -23,10 +23,8 @@ Servo FR_motor, FL_motor, BR_motor, BL_motor;
 
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
- Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
+Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 
-
-char ball = 0;
 
 typedef union
 {
@@ -90,11 +88,8 @@ void readWritePWM(){
       checkEnd = Serial.read();
       if(checkEnd == endRead){
         writePWM(pwm1.i,pwm2.i,pwm3.i,pwm4.i);
-        ball = 0x10;
         }
-      
       }
-      else ball = 0x22;
     } 
 }
 
