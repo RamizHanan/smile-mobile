@@ -64,9 +64,17 @@ while not rospy.is_shutdown():
             gyro_y = struct.unpack('<f', gyro_y)[0]
             gyro_z = ser.read(4)
             gyro_z = struct.unpack('<f', gyro_z)[0]
-
+            
             STOP = hex(ord(ser.read(1)))
             if (STOP == "0xad"):
+                # print("accel X: ",accel_x)
+                # print("accel Y: ",accel_y)
+                # print("accel Z: ",accel_z)
+                # print("gyro X: ",gyro_x)
+                # print("gyro Y: ",gyro_y)
+                # print("gyro Z: ",gyro_z)
+                # print("heading: ",heading)
+                # print("---------------------- \n")
                 #encoder_msg.header.stamp = rospy.Time.now()
                 encoder_msg.data = [-1*motor1_freq,motor2_freq,-1*motor1_freq,motor2_freq]
                 #imu_msg.header.stamp = rospy.Time.now()
