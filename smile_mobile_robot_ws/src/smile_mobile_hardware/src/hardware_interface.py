@@ -56,21 +56,25 @@ while not rospy.is_shutdown():
             accel_y = struct.unpack('<f', accel_y)[0]
             accel_z = ser.read(4)
             accel_z = struct.unpack('<f', accel_z)[0]
-            mag_x = ser.read(4)
-            mag_x = struct.unpack('<f', mag_x)[0]
-            mag_y = ser.read(4)
-            mag_y = struct.unpack('<f', mag_y)[0]
-            mag_z = ser.read(4)
-            mag_z = struct.unpack('<f', mag_z)[0]
+            heading = ser.read(4)
+            heading = struct.unpack('<f', heading)[0]
             gyro_x = ser.read(4)
             gyro_x = struct.unpack('<f', gyro_x)[0]
             gyro_y = ser.read(4)
             gyro_y = struct.unpack('<f', gyro_y)[0]
             gyro_z = ser.read(4)
             gyro_z = struct.unpack('<f', gyro_z)[0]
-
+            
             STOP = hex(ord(ser.read(1)))
             if (STOP == "0xad"):
+                # print("accel X: ",accel_x)
+                # print("accel Y: ",accel_y)
+                # print("accel Z: ",accel_z)
+                # print("gyro X: ",gyro_x)
+                # print("gyro Y: ",gyro_y)
+                # print("gyro Z: ",gyro_z)
+                # print("heading: ",heading)
+                # print("---------------------- \n")
                 #encoder_msg.header.stamp = rospy.Time.now()
                 encoder_msg.data = [-1*motor1_freq,motor2_freq,-1*motor1_freq,motor2_freq]
                 #imu_msg.header.stamp = rospy.Time.now()
@@ -84,7 +88,7 @@ while not rospy.is_shutdown():
                 
                 #b = bytearray(struct.pack('f',gyro_z))
                 #print(["0x%02x" % p for p in b])
-                yaw = math.atan2(mag_y, mag_x)
+                yaw = heading  #For some reason 0 degrees on IMU points to West 270
 
                 quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, yaw)
                 imu_msg.orientation.x = 0.0

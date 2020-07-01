@@ -5,4 +5,4 @@ pid:
 vehicle_params: {vehicle_width: 0.3048, wheel_radius: 0.066675}
 
 com_ports:
-    arduino_1: '/dev/ttyACM0'
+    arduino_1: '/dev/ttyUSB0'
