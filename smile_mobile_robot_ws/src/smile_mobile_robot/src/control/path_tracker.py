@@ -45,7 +45,7 @@ class Cross_Track_PID():
         self.cross_track_error_pub = rospy.Publisher(cross_track_error_topic, Float32, queue_size=1)
 
         #Initialize the PID controller for the change of angle
-        self.delta_angle_controller = PID_Controller(k_p=0.4,
+        self.delta_angle_controller = PID_Controller(k_p=0.3,
                                                    k_i=0.0,
                                                    k_d=0.0,
                                                    max_control_effort=1.0,

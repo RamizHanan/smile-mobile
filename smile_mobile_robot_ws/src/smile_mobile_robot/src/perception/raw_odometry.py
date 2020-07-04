@@ -11,6 +11,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 import numpy as np
 from tf.transformations import quaternion_from_euler, euler_from_quaternion
+from std_srvs.srv import Empty, EmptyResponse
 
 class Raw_Odometry:
     """
@@ -36,12 +37,16 @@ class Raw_Odometry:
         imu_data_topic = rospy.get_namespace() + "imu"
         encoder_data_topic = rospy.get_namespace() + "encoders"
         raw_odom_topic = rospy.get_namespace() + "raw/odometry"
+        zero_pos_topic = rospy.get_namespace() + "zero_pos"
 
         #Subscriber to imu
         rospy.Subscriber(imu_data_topic, Imu, self._imu_data_subscriber_callback)
 
         #Subscriber to the encoders
         rospy.Subscriber(encoder_data_topic, Float32MultiArray, self._encoders_subscriber_callback)
+
+        #service to reset the position values to zero
+        rospy.Service(zero_pos_topic, Empty, self._zero_position)
 
         #Publisher of estimated odometry data
         self.raw_odom_pub = rospy.Publisher(raw_odom_topic, Odometry, queue_size=10)
@@ -63,6 +68,19 @@ class Raw_Odometry:
         self.prev_pose = np.array([0.0, 0.0])
         self.curr_pose = np.array([0.0, 0,0])
         self.phi = 0.0
+
+    def _zero_position(self, req):
+        '''
+        Zero the position (this just resets the value, not the actual position).
+
+        Parameters:
+            req: Actually receives nothing, just a placeholder
+        Returns:
+            N/A
+        '''
+        self.curr_pose = np.array([0.0, 0.0])
+        self.prev_pose = np.array([0.0, 0.0])
+        return(EmptyResponse())
 
     def _imu_data_subscriber_callback(self, imu_data_msg):
         '''
