@@ -62,5 +62,7 @@ catkin_install_python(PROGRAMS
     src/control/lane_follower.py
     src/control/behaviour_selection.py
     src/control/motion_planner.py
+    src/control/trajectory_controller.py
+    src/control/path_tracker.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
