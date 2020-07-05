@@ -9,7 +9,7 @@
 
 // Set up IMU 
 /* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (100)
+#define BNO055_SAMPLERATE_DELAY_MS (10)
 
 //Address set for the I2C slave arduino reading the encoders
 #define SLAVE_ADDRESS_1 4
@@ -47,7 +47,7 @@ void writePWM(int pwm_1,int pwm_2,int pwm_3,int pwm_4){
   pwm_1 = (int)map(pwm_1, -255, 255, 0, 180);
   pwm_2 = (int)map(pwm_2, -255, 255, 0, 180);
   pwm_3 = (int)map(pwm_3, -255, 255, 0, 180);
-  pwm_4 = (int)map(-1*pwm_4, -255, 255, 0, 180);
+  pwm_4 = (int)map(-1 * pwm_4, -255, 255, 0, 180); //4th wheel is flipped physically
 
   FL_motor.write(pwm_1);
   FR_motor.write(pwm_2);
@@ -130,8 +130,8 @@ void setup() {
   //Initialize Master I2C.
   Wire.begin(); //No address needed for master.
 
-  //Serial.begin(115200);
-  Serial.begin(9600);
+  Serial.begin(115200);
+  //Serial.begin(9600);
 
   Serial.println("Orientation Sensor Raw Data Test"); Serial.println("");
 

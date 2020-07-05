@@ -4,19 +4,77 @@ import time
 import struct
 import rospy
 import math
+import numpy as np
 from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Joy
 from std_msgs.msg import Int16MultiArray, Float32MultiArray  # dont use
 import tf
 
-def writePWM(pwmList):
+# def writePWM(pwmList):
+#     global ser
+#     startWrite = 0xDB
+#     endWrite = 0xBD
+#     b = bytearray()
+#     b.append(startWrite)
+#     ser.write(b)
+#     for i in range(4): # 4 pwms in custom message
+#         pwm_bytes = struct.pack('i', pwmList.data[i])
+        
+#         ser.write(pwm_bytes)
+   
+#     b=bytearray()
+#     b.append(endWrite)
+#     ser.write(b)
+
+def writeJoyPWM(joy_msg):
     global ser
     startWrite = 0xDB
     endWrite = 0xBD
+    int16pwm = Int16MultiArray()
+
+    if (joy_msg.axes[1] >= 0.0):
+        pwmFL = (joy_msg.axes[1] * 155) 
+        pwmBL = (joy_msg.axes[1] * 155) 
+    else:
+        pwmFL = (joy_msg.axes[1] * 155) 
+        pwmBL = (joy_msg.axes[1] * 155) 
+    
+    if (joy_msg.axes[4] >= 0.0):
+        pwmFR = (joy_msg.axes[4] * 155) 
+        pwmBR = (joy_msg.axes[4] * 155) 
+    else:
+        pwmFR = (joy_msg.axes[4] * 155) 
+        pwmBR = (joy_msg.axes[4] * 155)
+
+    if (joy_msg.buttons[1]): #kill pwms with B Button
+        pwmFR = 0
+        pwmBR = 0
+        pwmFL = 0 
+        pwmBL = 0
+
+    if (joy_msg.buttons[5]): #RB for right rotate
+        pwmFR = -100
+        pwmBR = -100
+        pwmFL = 100
+        pwmBL = 100
+
+    if (joy_msg.buttons[4]): #LB for left rotate
+        pwmFR = 100
+        pwmBR = 100
+        pwmFL = -100 
+        pwmBL = -100
+
+    print("FL ", pwmFL)
+    print("BL ", pwmBL)
+    print("FR ", pwmFR)
+    print("BR ", pwmBR)
+
+    int16pwm.data = [pwmFL, pwmFR, pwmBR, pwmBL]
     b = bytearray()
     b.append(startWrite)
     ser.write(b)
     for i in range(4): # 4 pwms in custom message
-        pwm_bytes = struct.pack('i', pwmList.data[i])
+        pwm_bytes = struct.pack('i', int16pwm.data[i])
         
         ser.write(pwm_bytes)
    
@@ -24,22 +82,22 @@ def writePWM(pwmList):
     b.append(endWrite)
     ser.write(b)
 
-
 rospy.init_node("ControlNode")
 IMU_topic = rospy.get_namespace() + 'imu'
 Enc_topic = rospy.get_namespace() + 'encoders'
 PWM_topic = rospy.get_namespace() + 'pwm'
-
+joy_topic = 'joy'
 IMU_raw_pub = rospy.Publisher(IMU_topic, Imu, queue_size=10)
 encoder_pub = rospy.Publisher(Enc_topic, Float32MultiArray, queue_size = 10)
-pwm_sub = rospy.Subscriber(PWM_topic, Int16MultiArray, writePWM)
+# pwm_sub = rospy.Subscriber(PWM_topic, Int16MultiArray, writePWM)
+joy_sub = rospy.Subscriber(joy_topic, Joy, writeJoyPWM)
 imu_msg = Imu()
 encoder_msg = Float32MultiArray() 
 
 #Get the COM port of the master arduino
 com_port = rospy.get_param('/com_ports/arduino_1')
 
-ser = serial.Serial(com_port,9600)
+ser = serial.Serial(com_port,115200)
 
 
 while not rospy.is_shutdown():
@@ -67,14 +125,15 @@ while not rospy.is_shutdown():
             
             STOP = hex(ord(ser.read(1)))
             if (STOP == "0xad"):
-                # print("accel X: ",accel_x)
-                # print("accel Y: ",accel_y)
-                # print("accel Z: ",accel_z)
-                # print("gyro X: ",gyro_x)
-                # print("gyro Y: ",gyro_y)
-                # print("gyro Z: ",gyro_z)
-                # print("heading: ",heading)
-                # print("---------------------- \n")
+                print("accel X: ",accel_x)
+                print("accel Y: ",accel_y)
+                print("accel Z: ",accel_z)
+                print("gyro X: ",gyro_x)
+                print("gyro Y: ",gyro_y)
+                print("gyro Z: ",gyro_z)
+                print("heading: ",heading)
+                print("---------------------- \n")
+                
                 #encoder_msg.header.stamp = rospy.Time.now()
                 encoder_msg.data = [-1*motor1_freq,motor2_freq,-1*motor1_freq,motor2_freq]
                 #imu_msg.header.stamp = rospy.Time.now()
@@ -88,7 +147,7 @@ while not rospy.is_shutdown():
                 
                 #b = bytearray(struct.pack('f',gyro_z))
                 #print(["0x%02x" % p for p in b])
-                yaw = heading  #For some reason 0 degrees on IMU points to West 270
+                yaw = (heading - 180) * (np.pi / 180.0) #For some reason 0 degrees on IMU points to West 270
 
                 quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, yaw)
                 imu_msg.orientation.x = 0.0
@@ -99,7 +158,7 @@ while not rospy.is_shutdown():
                 encoder_pub.publish(encoder_msg)
                 IMU_raw_pub.publish(imu_msg)
     
-    time.sleep(.001)   
+    time.sleep(0.01)   
 
 ser.close()     
     #check in_waiting
