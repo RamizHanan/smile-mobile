@@ -19,37 +19,37 @@ import tf
 #     ser.write(b)
 #     for i in range(4): # 4 pwms in custom message
 #         pwm_bytes = struct.pack('i', pwmList.data[i])
-        
+
 #         ser.write(pwm_bytes)
-   
+
 #     b=bytearray()
 #     b.append(endWrite)
 #     ser.write(b)
 
 def writeJoyPWM(joy_msg):
     global ser
-    startWrite = 0xDB
-    endWrite = 0xBD
+    start_byte = 0xDB
+    end_byte = 0xBD
     int16pwm = Int16MultiArray()
 
     if (joy_msg.axes[1] >= 0.0):
-        pwmFL = (joy_msg.axes[1] * 155) 
-        pwmBL = (joy_msg.axes[1] * 155) 
+        pwmFL = (joy_msg.axes[1] * 155)
+        pwmBL = (joy_msg.axes[1] * 155)
     else:
-        pwmFL = (joy_msg.axes[1] * 155) 
-        pwmBL = (joy_msg.axes[1] * 155) 
-    
+        pwmFL = (joy_msg.axes[1] * 155)
+        pwmBL = (joy_msg.axes[1] * 155)
+
     if (joy_msg.axes[4] >= 0.0):
-        pwmFR = (joy_msg.axes[4] * 155) 
-        pwmBR = (joy_msg.axes[4] * 155) 
+        pwmFR = (joy_msg.axes[4] * 155)
+        pwmBR = (joy_msg.axes[4] * 155)
     else:
-        pwmFR = (joy_msg.axes[4] * 155) 
+        pwmFR = (joy_msg.axes[4] * 155)
         pwmBR = (joy_msg.axes[4] * 155)
 
     if (joy_msg.buttons[1]): #kill pwms with B Button
         pwmFR = 0
         pwmBR = 0
-        pwmFL = 0 
+        pwmFL = 0
         pwmBL = 0
 
     if (joy_msg.buttons[5]): #RB for right rotate
@@ -61,7 +61,7 @@ def writeJoyPWM(joy_msg):
     if (joy_msg.buttons[4]): #LB for left rotate
         pwmFR = 100
         pwmBR = 100
-        pwmFL = -100 
+        pwmFL = -100
         pwmBL = -100
 
     print("FL ", pwmFL)
@@ -71,15 +71,16 @@ def writeJoyPWM(joy_msg):
 
     int16pwm.data = [pwmFL, pwmFR, pwmBR, pwmBL]
     b = bytearray()
-    b.append(startWrite)
+    b.append(start_byte)
     ser.write(b)
+
     for i in range(4): # 4 pwms in custom message
-        pwm_bytes = struct.pack('i', int16pwm.data[i])
-        
+        pwm_bytes = struct.pack('h', int16pwm.data[i])
+
         ser.write(pwm_bytes)
-   
+
     b=bytearray()
-    b.append(endWrite)
+    b.append(end_byte)
     ser.write(b)
 
 rospy.init_node("ControlNode")
@@ -92,7 +93,7 @@ encoder_pub = rospy.Publisher(Enc_topic, Float32MultiArray, queue_size = 10)
 # pwm_sub = rospy.Subscriber(PWM_topic, Int16MultiArray, writePWM)
 joy_sub = rospy.Subscriber(joy_topic, Joy, writeJoyPWM)
 imu_msg = Imu()
-encoder_msg = Float32MultiArray() 
+encoder_msg = Float32MultiArray()
 
 #Get the COM port of the master arduino
 com_port = rospy.get_param('/com_ports/arduino_1')
@@ -122,7 +123,7 @@ while not rospy.is_shutdown():
             gyro_y = struct.unpack('<f', gyro_y)[0]
             gyro_z = ser.read(4)
             gyro_z = struct.unpack('<f', gyro_z)[0]
-            
+
             STOP = hex(ord(ser.read(1)))
             if (STOP == "0xad"):
                 print("accel X: ",accel_x)
@@ -133,18 +134,18 @@ while not rospy.is_shutdown():
                 print("gyro Z: ",gyro_z)
                 print("heading: ",heading)
                 print("---------------------- \n")
-                
+
                 #encoder_msg.header.stamp = rospy.Time.now()
                 encoder_msg.data = [-1*motor1_freq,motor2_freq,-1*motor1_freq,motor2_freq]
                 #imu_msg.header.stamp = rospy.Time.now()
                 imu_msg.linear_acceleration.x = accel_x # accel
                 imu_msg.linear_acceleration.y = accel_y
                 imu_msg.linear_acceleration.z = accel_z
-                
+
                 imu_msg.angular_velocity.x = gyro_x # gyro
                 imu_msg.angular_velocity.y = gyro_y
                 imu_msg.angular_velocity.z = gyro_z
-                
+
                 #b = bytearray(struct.pack('f',gyro_z))
                 #print(["0x%02x" % p for p in b])
                 yaw = (heading - 180) * (np.pi / 180.0) #For some reason 0 degrees on IMU points to West 270
@@ -154,15 +155,14 @@ while not rospy.is_shutdown():
                 imu_msg.orientation.y = 0.0
                 imu_msg.orientation.z = quaternion[2]
                 imu_msg.orientation.w = quaternion[3]
-                
+
                 encoder_pub.publish(encoder_msg)
                 IMU_raw_pub.publish(imu_msg)
-    
-    time.sleep(0.01)   
 
-ser.close()     
+    time.sleep(0.01)
+
+ser.close()
     #check in_waiting
     #check sync start byte
     #read data (floats 4 bytes)
     #check stop byte for validation
-

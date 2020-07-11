@@ -29,6 +29,7 @@ typedef union
  * Write the PWM values received to the motor controller. Remap the PWM values from -255, 255 --> 0 180
  */
 void writePWM(int pwm1,int pwm2,int pwm3,int pwm4){
+  Serial.write(pwm1);
   //Remap the PWM signals from -255, 255 to 0, 180 for the servo library
   //Sum multiplied by a negative to account for motor directions
   pwm1 = (int)map(pwm1, -255, 255, 0, 180);
@@ -64,45 +65,42 @@ void loop() {
   char endRead = 0xBD;
   char checkStart;
   char checkEnd;
-  char readByte;
-  //FOR DEBUGGING PURPOSES
+  char readByte[0];
 
   //Wait for all 10 bytes to be available before reading.
   //This proved to give more consistent results
-  if(Serial.available() > 10){
+  if(Serial.available() > 0){
     
     switch (receivingState) {
       case 0:
-        readByte = Serial.read();
-        if(readByte == startRead){receivingState = 1;}
+        Serial.readBytes(readByte, 1);
+        if(readByte[0] == startRead){receivingState = 1;}
+        else {receivingState = 0;}
         break;
       case 1:
-        //Read 8 bytes for all the PWM values
-        pwm1.c[0] = Serial.read();
-        pwm1.c[1] = Serial.read();
-        
-        pwm2.c[0] = Serial.read();
-        pwm2.c[1] = Serial.read(); 
-        
-        pwm3.c[0] = Serial.read();
-        pwm3.c[1] = Serial.read();    
-        
-        pwm4.c[0] = Serial.read();
-        pwm4.c[1] = Serial.read();
+        //Read 2 bytes each for the 4 PWM values
+        //MUST use readBytes instead of read.
+        Serial.readBytes(pwm1.c, 2);
+        Serial.readBytes(pwm2.c, 2);
+        Serial.readBytes(pwm3.c, 2);
+        Serial.readBytes(pwm4.c, 2);
 
         receivingState = 2;
         break;
      case 2:
-        readByte = Serial.read();
-        if(readByte == endRead)
+        Serial.readBytes(readByte, 1); 
+        if(readByte[0] == endRead) //Successful receive of a datapacket.
         {
-          receivingState = 0;
           writePWM(pwm1.i, pwm2.i, pwm3.i, pwm4.i);
-
-          //FOR DEBUG PURPOSES
-          digitalWrite(11, debugPinState);
-          debugPinState = !debugPinState;
-          Serial.write('A');
+          receivingState = 0;
+        
+          //FOR DEBUG PURPOSES (COMMENT OUT IN IMPLEMENTATION)
+//          if(pwm3.i == -152){
+//          
+//          digitalWrite(11, debugPinState);
+//          debugPinState = !debugPinState;
+//          
+//          }
         }
         else
           receivingState = 0;
