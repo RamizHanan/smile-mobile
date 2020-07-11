@@ -1,5 +1,5 @@
-rosparam set joy_node/dev "/dev/input/js0"
-rosparam set joy_node/dev 12
+rosparam set joy_node/dev "/dev/input/js0" &&
+rosparam set joy_node/dev 12 &&
 rosrun joy joy_node
 
 -------------
