@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
     sensor_msgs
     geometry_msgs
     nav_msgs
+    actionlib_msgs
     message_generation
 )
 
@@ -23,11 +24,19 @@ add_service_files(
     FILES
     pid_gains.srv
     bool_call.srv
+    mode_select.srv
+)
+
+add_action_files(
+  DIRECTORY action
+  FILES motion.action
+
 )
 
 generate_messages(
   DEPENDENCIES
   std_msgs
+  actionlib_msgs
 )
 
 
@@ -37,6 +46,7 @@ catkin_package(
     CATKIN_DEPENDS roscpp
     rospy std_msgs message_runtime
     sensor_msgs geometry_msgs nav_msgs
+    actionlib_msgs
 )
 
 include_directories(
@@ -50,5 +60,7 @@ catkin_install_python(PROGRAMS
     src/control/keyboard_teleop.py
     src/perception/vision/lane_detector.py
     src/control/lane_follower.py
+    src/control/behaviour_selection.py
+    src/control/motion_planner.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

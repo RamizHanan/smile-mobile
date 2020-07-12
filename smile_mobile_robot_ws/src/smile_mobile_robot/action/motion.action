@@ -1,0 +1,12 @@
+#Define the goal movement position
+float32 X
+float32 Y
+float32 velocity
+---
+#Define the result
+bool success
+float32 time
+---
+#Define the feedback message
+float32 dist
+float32 time

@@ -131,7 +131,7 @@ class Movement_Controller:
         Unpack the data
 
         Parameters:
-            measured_odom_msg: Odometry data message type nav_msgs/Odometry
+            odom_msg: Odometry data message type nav_msgs/Odometry
         Returns:
             N/A
         '''

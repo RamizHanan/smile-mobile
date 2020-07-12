@@ -1,0 +1,14 @@
+rosparam set joy_node/dev "/dev/input/js0"
+rosparam set joy_node/dev 12
+rosrun joy joy_node
+
+-------------
+
+rostopic echo joy
+
+-------------
+sudo chmod a+rw /dev/ttyUSB0
+
+
+rosrun smile_mobile_hardware hardware_interface.py
+
