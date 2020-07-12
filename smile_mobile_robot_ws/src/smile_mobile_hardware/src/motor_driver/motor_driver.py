@@ -11,9 +11,19 @@ import serial
 import time
 import struct
 
+rospy.init_node("motor_driver")
+
 #Global varialbes
+
+#Load the com_port that the motor driver is connected to. This is from the parameter server
+if rospy.has_param('/motor_driver_serial'):
+    com_port = rospy.get_param('/motor_driver_serial')
+else:
+    rospy.logerr("PARAMETER 'motor_driver_serial' NOT LOADED IN PARAMETER SERVER. CANNOT ATTEMPT TO CONNECT TO SERIAL.")
+    raise
+
 com_port = '/dev/ttyUSB0'
-motor_control_serial = serial.Serial(com_port, 115200)
+motor_driver_serial = serial.Serial(com_port, 115200)
 START_BYTE = 0xDB
 END_BYTE = 0xBD
 SENDING_PERIOD = 0.010 #Write values ten times a second
@@ -48,8 +58,6 @@ def main():
     '''
     global pwm_values
 
-    rospy.init_node("motor_driver")
-
     #Initialize a subscriber for the PWM values
     pwm_topic = rospy.get_namespace() + 'pwm'
     pwm_subscriber = rospy.Subscriber(pwm_topic, Int16MultiArray, pwm_subscriber_callback)
@@ -62,17 +70,17 @@ def main():
             #Write the start byte
             b = bytearray()
             b.append(START_BYTE)
-            motor_control_serial.write(b)
+            motor_driver_serial.write(b)
 
             #Write the 4 pwm values (16-bit)
             for i in range(4):
                 pwm = struct.pack('h', pwm_values[i])
-                motor_control_serial.write(pwm)
+                motor_driver_serial.write(pwm)
 
             #Write the end byte
             b = bytearray()
             b.append(END_BYTE)
-            motor_control_serial.write(b)
+            motor_driver_serial.write(b)
 
             #Hold out the remaining time to ensure consistent sending rate
             end_time = time.time()
