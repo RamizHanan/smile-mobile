@@ -32,44 +32,52 @@ def writeJoyPWM(joy_msg):
     end_byte = 0xBD
     int16pwm = Int16MultiArray()
 
-    if (joy_msg.axes[1] >= 0.0):
-        pwmFL = (joy_msg.axes[1] * 155)
-        pwmBL = (joy_msg.axes[1] * 155)
-    else:
-        pwmFL = (joy_msg.axes[1] * 155)
-        pwmBL = (joy_msg.axes[1] * 155)
+    FWBW_pwmFL = (joy_msg.axes[1] * 75) 
+    FWBW_pwmBL = (joy_msg.axes[1] * 75) 
+    FWBW_pwmFR = (joy_msg.axes[1] * 75) 
+    FWVW_pwmBR = (joy_msg.axes[1] * 75) 
+    
+    #1 is left, -1 is right
+    if(joy_msg.axes[3] >= 0.0): 
+        LR_pwmFL = 0
+        LR_pwmBL = 0
+        LR_pwmFR = (joy_msg.axes[3] * 50) 
+        LR_pwmBR = (joy_msg.axes[3] * 50) 
+    else: 
+        LR_pwmFL = 0 - (joy_msg.axes[3] * 50) 
+        LR_pwmBL = 0 - (joy_msg.axes[3] * 50) 
+        LR_pwmFR = 0 #- (joy_msg.axes[3] * 50) 
+        LR_pwmBR = 0 #- (joy_msg.axes[3] * 50) 
 
-    if (joy_msg.axes[4] >= 0.0):
-        pwmFR = (joy_msg.axes[4] * 155)
-        pwmBR = (joy_msg.axes[4] * 155)
-    else:
-        pwmFR = (joy_msg.axes[4] * 155)
-        pwmBR = (joy_msg.axes[4] * 155)
+    total_pwmFL = FWBW_pwmFL + LR_pwmFL
+    total_pwmBL = FWBW_pwmBL + LR_pwmBL
+    total_pwmFR = FWBW_pwmFR + LR_pwmFR
+    total_pwmBR = FWVW_pwmBR + LR_pwmBR
 
     if (joy_msg.buttons[1]): #kill pwms with B Button
-        pwmFR = 0
-        pwmBR = 0
-        pwmFL = 0
-        pwmBL = 0
+        total_pwmFL = 0
+        total_pwmBL = 0
+        total_pwmFR = 0 
+        total_pwmBR = 0
 
     if (joy_msg.buttons[5]): #RB for right rotate
-        pwmFR = -100
-        pwmBR = -100
-        pwmFL = 100
-        pwmBL = 100
+        total_pwmFR = -100
+        total_pwmBR = -100
+        total_pwmFL = 100
+        total_pwmBL = 100
 
     if (joy_msg.buttons[4]): #LB for left rotate
-        pwmFR = 100
-        pwmBR = 100
-        pwmFL = -100
-        pwmBL = -100
+        total_pwmFR = 100
+        total_pwmBR = 100
+        total_pwmFL = -100 
+        total_pwmBL = -100
 
-    print("FL ", pwmFL)
-    print("BL ", pwmBL)
-    print("FR ", pwmFR)
-    print("BR ", pwmBR)
+    print("FL ", total_pwmFL)
+    print("BL ", total_pwmBL)
+    print("FR ", total_pwmFR)
+    print("BR ", total_pwmBR)
 
-    int16pwm.data = [pwmFL, pwmFR, pwmBR, pwmBL]
+    int16pwm.data = [total_pwmFL, total_pwmFR, total_pwmBR, total_pwmBL]
     b = bytearray()
     b.append(start_byte)
     ser.write(b)
