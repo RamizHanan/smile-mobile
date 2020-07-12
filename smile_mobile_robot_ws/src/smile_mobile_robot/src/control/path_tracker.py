@@ -15,6 +15,7 @@ from tf.transformations import euler_from_quaternion
 import time
 import matplotlib.pyplot as plt
 from pid_controller import PID_Controller
+from Queue import Queue
 
 
 
@@ -45,26 +46,28 @@ class Cross_Track_PID():
         self.cross_track_error_pub = rospy.Publisher(cross_track_error_topic, Float32, queue_size=1)
 
         #Initialize the PID controller for the change of angle
-        self.delta_angle_controller = PID_Controller(k_p=0.3,
-                                                   k_i=0.0,
-                                                   k_d=0.0,
-                                                   max_control_effort=1.0,
-                                                   min_control_effort=-1.0,
+        self.delta_angle_controller = PID_Controller(k_p=0.50,
+                                                   k_i=0.00,
+                                                   k_d=0.00,
+                                                   max_control_effort=0.10,
+                                                   min_control_effort=-0.10,
                                                    integral_min=-10,
                                                    integral_max=10)
 
+        #Trajectory Queue for queueing up paths to follow.
+        self.trajectory_queue = Queue(maxsize=20)
+
         #FOR TESTING PURPOSES, GENERATE A RANDOM TRAJECTORY.
         x_ref = np.arange(0, 10, 1/2.0)
-        y_ref = x_ref
+        y_ref = np.sqrt(x_ref)
 
         #Testing trajectory. (NOT FINAL FORM AT ALL)
-        self.trajectory = Trajectory(x_ref, y_ref, self.X, self.Y, self.yaw, 0.0, 1.0, 0.0, 0.0)
-        self.trajectory_index = 0
-        self.max_trajectory_index = len(self.trajectory.x_path)
-        print(self.max_trajectory_index)
-        self.rate = rospy.Rate(10)
+        trajectory = Trajectory(x_ref, y_ref, self.X, self.Y, self.yaw, 0.0, 1.0, 0.0, 0.0)
+        self.trajectory_queue.put(trajectory)
 
-    def _get_closest_point(self):
+        self.rate = rospy.Rate(100)
+
+    def _get_closest_point(self, trajectory, curr_index):
         '''
         Get's the closest point between the robots current position and that of the trajectory.
 
@@ -73,14 +76,17 @@ class Cross_Track_PID():
         Returns:
             N/A
         '''
-        closest_point_calc_region_tol = 50
-        lower_index = 0
-        upper_index = self.max_trajectory_index
-        if(self.trajectory_index >= closest_point_calc_region_tol):
-            lower_index = self.trajectory_index - closest_point_calc_region_tol
+        max_trajectory_index = len(trajectory.x_path)
 
-        if(self.trajectory_index <= self.max_trajectory_index - closest_point_calc_region_tol):
-            upper_index = self.trajectory_index + closest_point_calc_region_tol
+        closest_point_calc_region_tol = 20
+        lower_index = 0
+        upper_index = max_trajectory_index
+
+        if(curr_index >= closest_point_calc_region_tol):
+            lower_index = curr_index - closest_point_calc_region_tol
+
+        if(curr_index <= max_trajectory_index - closest_point_calc_region_tol):
+            upper_index = curr_index + closest_point_calc_region_tol
 
         shortest_distance = 1e6
         x = self.X
@@ -89,18 +95,18 @@ class Cross_Track_PID():
         #Find the closest points within the index range
         for index in range(lower_index, upper_index):
 
-            distance = np.sqrt((x - self.trajectory.x_path[index])**2 + (y - self.trajectory.y_path[index])**2)
+            distance = np.sqrt((x - trajectory.x_path[index])**2 + (y - trajectory.y_path[index])**2)
             if(distance < shortest_distance):
                 shortest_distance = distance
-                self.trajectory_index = index #update the index
+                curr_index = index #update the index
 
         #Determine if it is to the left or right of the vehicle
-        dir_angle = np.arctan2((y - self.trajectory.y_path[self.trajectory_index]), (x - self.trajectory.x_path[self.trajectory_index]))
+        dir_angle = np.arctan2((y - trajectory.y_path[curr_index]), (x - trajectory.x_path[curr_index]))
 
         if(dir_angle < 0):
             shortest_distance *= -1
 
-        return shortest_distance, self.trajectory_index
+        return shortest_distance, curr_index
 
     def _odom_data_callback(self, odom_msg):
         '''
@@ -131,41 +137,74 @@ class Cross_Track_PID():
     def run(self):
         '''
         '''
+        executing_trajectory = False
+        current_trajectory = None
+        trajectory_index = 0
+        max_trajectory_index = 0
+
+        #FOR TESTING PURPOSES
+        mean_square_error = 0.0
         try:
             while(not rospy.is_shutdown()):
 
-                #Get the cross track error
-                cross_track_error, index = self._get_closest_point()
+                #Executing a trajectory
+                if(executing_trajectory):
 
-                if(index == self.max_trajectory_index - 1):
-                    self.desired_movement_msg.data = [0, 0]
+                    #Get the cross track error
+                    cross_track_error, trajectory_index = self._get_closest_point(current_trajectory, trajectory_index)
+
+                    #When the maximum index is reached (end of path)
+                    if(trajectory_index == max_trajectory_index - 1):
+                        self.desired_movement_msg.data = [0, 0]
+                        self.desired_movement_pub.publish(self.desired_movement_msg)
+                        executing_trajectory = False
+                        print("Done")
+                        continue
+
+                    delta_angle, error = self.delta_angle_controller.update(0, cross_track_error)
+                    #delta_angle = np.arctan2((self.Y - current_trajectory.y_path[trajectory_index]), (self.X - current_trajectory.x_path[trajectory_index]))
+
+                    #Get the desired steering angle, limit the steering angle between -pi, pi
+                    adjustment_angle = self.yaw + delta_angle
+                    if(adjustment_angle < -1*math.pi):
+                        desired_orientation = 2.0*math.pi + adjustment_angle
+
+                    elif(adjustment_angle > math.pi):
+                        desired_orientation = adjustment_angle - 2.0*math.pi
+
+                    else:
+                        desired_orientation = adjustment_angle
+
+
+                    #Send the desired movememnt to the movement controller (velocity, angle)
+                    self.desired_movement_msg.data = [0.25, desired_orientation]
                     self.desired_movement_pub.publish(self.desired_movement_msg)
-                    print("Done")
-                    break
-                delta_angle, error = self.delta_angle_controller.update(0, cross_track_error)
 
-                #Get the desired steering angle
-                adjustment_angle = self.yaw + delta_angle
-                if(adjustment_angle < -1*math.pi):
-                    desired_orientation = 2.0*math.pi + adjustment_angle
-
-                elif(adjustment_angle > math.pi):
-                    desired_orientation = adjustment_angle - 2.0*math.pi
-
+                    #FOR DEBUGGING PURPOSES
+                    #self.cross_track_error_msg.data = cross_track_error
+                    #self.cross_track_error_pub.publish(self.cross_track_error_msg)
+                    #mean_square_error = (mean_square_error + cross_track_error**2) / 2.0
+                    #print(cross_track_error)
+                    trajectory_index += 1
                 else:
-                    desired_orientation = adjustment_angle
 
-                self.desired_movement_msg.data = [0.5, desired_orientation]
-                self.desired_movement_pub.publish(self.desired_movement_msg)
-
-                #FOR DEBUGGING PURPOSES
-                self.cross_track_error_msg.data = cross_track_error
-                self.cross_track_error_pub.publish(self.cross_track_error_msg)
+                    #Check if the the queue is empty
+                    if(self.trajectory_queue.empty()):
+                        rospy.loginfo("Trajectory Queue Empty!")
+                        self.desired_movement_msg.data = [0, 0]
+                        self.desired_movement_pub.publish(self.desired_movement_msg)
+                    else:
+                        current_trajectory = self.trajectory_queue.get()
+                        max_trajectory_index = len(current_trajectory.x_path)
+                        executing_trajectory = True
+                        trajectory_index = 0
 
 
                 self.rate.sleep()
+
         except rospy.ROSInterruptException:
             rospy.loginfo("Trajectory Controller Interurupted. Shutting Down")
+
 
 if __name__ == "__main__":
     cross_track_pid = Cross_Track_PID()
