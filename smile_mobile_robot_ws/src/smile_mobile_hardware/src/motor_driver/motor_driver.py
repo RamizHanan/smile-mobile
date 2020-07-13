@@ -22,7 +22,7 @@ else:
     rospy.logerr("PARAMETER 'motor_driver_serial' NOT LOADED IN PARAMETER SERVER. CANNOT ATTEMPT TO CONNECT TO SERIAL.")
     raise
 
-com_port = '/dev/ttyUSB0'
+com_port = rospy.get_param('/motor_driver_serial')
 motor_driver_serial = serial.Serial(com_port, 115200)
 START_BYTE = 0xDB
 END_BYTE = 0xBD

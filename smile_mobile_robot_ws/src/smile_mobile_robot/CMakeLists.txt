@@ -59,8 +59,5 @@ catkin_install_python(PROGRAMS
     src/helpers/send_desired_movement.py
     src/control/keyboard_teleop.py
     src/perception/vision/lane_detector.py
-    src/control/lane_follower.py
-    src/control/behaviour_selection.py
-    src/control/motion_planner.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
