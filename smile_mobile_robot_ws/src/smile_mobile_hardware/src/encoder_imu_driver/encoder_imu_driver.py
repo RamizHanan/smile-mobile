@@ -18,14 +18,14 @@ rospy.init_node("enc_imu_driver")
 #Global variables
 
 #Load the com_port that the motor driver is connected to. This is from the parameter server
-if rospy.has_param('/enc_imu_serial'):
-    com_port = rospy.get_param('/enc_imu_serial')
+if rospy.has_param('/enc_imu_serial_port'):
+    com_port = rospy.get_param('/enc_imu_serial_port')
 else:
-    rospy.logerr("PARAMETER 'enc_imu_serial' NOT LOADED IN PARAMETER SERVER. CANNOT ATTEMPT TO CONNECT TO SERIAL.")
+    rospy.logerr("PARAMETER 'enc_imu_serial_port' NOT LOADED IN PARAMETER SERVER. CANNOT ATTEMPT TO CONNECT TO SERIAL.")
     raise
 
-com_port = rospy.get_param('/enc_imu_serial')
-enc_imu_serial = serial.Serial(com_port, 115200)
+serial_port = rospy.get_param('/enc_imu_serial_port')
+enc_imu_serial = serial.Serial(serial_port, 115200)
 START_BYTE = hex(0xDA)
 END_BYTE = hex(0xAD)
 RECEIVING_PERIOD = 0.0050 #Needs to be at least twice as high of a freq as the sender
