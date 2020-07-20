@@ -16,14 +16,14 @@ rospy.init_node("motor_driver")
 #Global varialbes
 
 #Load the com_port that the motor driver is connected to. This is from the parameter server
-if rospy.has_param('/motor_driver_serial'):
-    com_port = rospy.get_param('/motor_driver_serial')
+if rospy.has_param('/motor_driver_serial_port'):
+    com_port = rospy.get_param('/motor_driver_serial_port')
 else:
     rospy.logerr("PARAMETER 'motor_driver_serial' NOT LOADED IN PARAMETER SERVER. CANNOT ATTEMPT TO CONNECT TO SERIAL.")
     raise
 
-com_port = '/dev/ttyUSB0'
-motor_driver_serial = serial.Serial(com_port, 115200)
+serial_port = rospy.get_param('/motor_driver_serial_port')
+motor_driver_serial = serial.Serial(serial_port, 115200)
 START_BYTE = 0xDB
 END_BYTE = 0xBD
 SENDING_PERIOD = 0.010 #Write values ten times a second

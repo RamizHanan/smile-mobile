@@ -21,9 +21,7 @@ include_directories(
 )
 
 catkin_install_python(PROGRAMS
-    src/hardware_interface.py
     src/motor_driver/motor_driver.py
-    src/webcam_publish.py
-    src/webcam_receive.py
+    src/encoder_imu_driver/encoder_imu_driver.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
