@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+
+<script type="text/javascript" src="http://static.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+<script type="text/javascript" src="http://static.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+
+<script type="text/javascript" type="text/javascript">
+  // Connecting to ROS
+  var ros = new ROSLIB.Ros({
+    url : 'ws://192.168.2.208:9090'
+  });
+
+  ros.on('connection', function() {
+    console.log('Connected to websocket server.');
+  });
+
+  ros.on('error', function(error) {
+    console.log('Error connecting to websocket server: ', error);
+  });
+
+  ros.on('close', function() {
+    console.log('Connection to websocket server closed.');
+  });
+
+  // Subscribing to a Topic
+  var listener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/listener',
+    messageType : 'std_msgs/String'
+  });
+
+  listener.subscribe(function(message) {
+    console.log('Received message on ' + listener.name + ': ' + message.data);
+    listener.unsubscribe();
+  });
+
+  var image_topic = new ROSLIB.Topic({
+  ros: ros, name: '/cv2_capture',
+  messageType: 'sensor_msgs/CompressedImage'
+  });
+
+  image_topic.subscribe(function(message) {
+  document.getElementById('my_image').src = "data:image/jpg;base64," + message.data;
+});
+</script>
+</head>
+
+<body>
+  <h1>Simple roslib Example</h1>
+  <p>Check your Web Console for output.</p>
+  <img id="my_image" style='height: 100%; width: 100%; object-fit: contain' src="placeholder.png">
+
+</body>
+</html>
