@@ -10,5 +10,8 @@
 
     <node name="hardware_interface" pkg="smile_mobile_hardware" type="hardware_interface.py"/>
   </group>
-  
+
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+    <arg name="port" value="9090"/>
+  </include>
 </launch>
