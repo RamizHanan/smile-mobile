@@ -215,7 +215,7 @@ class Movement_Controller:
                 error_msg.data = [velocity_error, steering_error]
                 error_pub.publish(error_msg)
 
-                motor_pwms = self.map_control_efforts_to_pwms(self.velocity_control, self.steering_control)
+                motor_pwms = self.map_control_efforts_to_pwms(self.velocity_control, -1*self.steering_control)
 
 
                 self.pwm_msg.data = motor_pwms

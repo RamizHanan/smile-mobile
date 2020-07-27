@@ -126,7 +126,7 @@ class PID_Controller():
                     error = error - 360.0
                 elif(error < -180.0):
                     error = error + 360.0
-        
+      
         #Bound errors if needed
         error = self.bound_value(error, self.min_error, self.max_error)
 
