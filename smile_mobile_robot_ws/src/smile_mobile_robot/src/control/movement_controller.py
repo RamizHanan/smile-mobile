@@ -140,12 +140,10 @@ class Movement_Controller:
 
         #Orientation is the direction the robot faces
         #Convert from quaternion to euler
-        quaternion = [self.measured_odom.pose.pose.orientation.x,
+        [roll, pitch, yaw] =  [self.measured_odom.pose.pose.orientation.x,
                       self.measured_odom.pose.pose.orientation.y,
-                      self.measured_odom.pose.pose.orientation.z,
-                      self.measured_odom.pose.pose.orientation.w]
-        [roll, pitch, yaw] = euler_from_quaternion(quaternion)
-
+                      self.measured_odom.pose.pose.orientation.z]
+        
         self.measured_orientation = yaw
 
 

@@ -3,6 +3,6 @@
   <rosparam file="$(find smile_mobile_hardware)/config/hardware.yaml" command="load"/>
   <group ns="smile">
   	<node name="encoder_imu_driver" pkg="smile_mobile_hardware" type="encoder_imu_driver.py"/>
-  	<node name="motor_driver" pkg="smile_mobile_hardware" type="motor_driver.py"/>
+	  <node name="motor_driver" pkg="smile_mobile_hardware" type="motor_driver.py"/>
   </group>
 </launch>
