@@ -94,8 +94,8 @@ class Movement_Controller:
         self.steering_pid_controller = PID_Controller(k_p=steering_k_p,
                                                       k_i=steering_k_i,
                                                       k_d=steering_k_d,
-                                                      max_control_effort=100,
-                                                      min_control_effort=-100,
+                                                      max_control_effort=80,
+                                                      min_control_effort=-80,
                                                       integral_min=-10,
                                                       integral_max=10,
                                                       angle_error=True)
@@ -140,12 +140,10 @@ class Movement_Controller:
 
         #Orientation is the direction the robot faces
         #Convert from quaternion to euler
-        quaternion = [self.measured_odom.pose.pose.orientation.x,
+        [roll, pitch, yaw] =  [self.measured_odom.pose.pose.orientation.x,
                       self.measured_odom.pose.pose.orientation.y,
-                      self.measured_odom.pose.pose.orientation.z,
-                      self.measured_odom.pose.pose.orientation.w]
-        [roll, pitch, yaw] = euler_from_quaternion(quaternion)
-
+                      self.measured_odom.pose.pose.orientation.z]
+        
         self.measured_orientation = yaw
 
 
@@ -217,7 +215,7 @@ class Movement_Controller:
                 error_msg.data = [velocity_error, steering_error]
                 error_pub.publish(error_msg)
 
-                motor_pwms = self.map_control_efforts_to_pwms(self.velocity_control, self.steering_control)
+                motor_pwms = self.map_control_efforts_to_pwms(self.velocity_control, -1*self.steering_control)
 
 
                 self.pwm_msg.data = motor_pwms

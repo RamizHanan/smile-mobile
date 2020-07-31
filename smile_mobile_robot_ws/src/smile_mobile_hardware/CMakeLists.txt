@@ -23,5 +23,6 @@ include_directories(
 catkin_install_python(PROGRAMS
     src/motor_driver/motor_driver.py
     src/encoder_imu_driver/encoder_imu_driver.py
+    src/vision/webcam_publish.py
     DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

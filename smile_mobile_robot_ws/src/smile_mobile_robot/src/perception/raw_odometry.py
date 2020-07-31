@@ -62,6 +62,8 @@ class Raw_Odometry:
         self.velocity = 0.0
         self.prev_pose = np.array([0.0, 0.0])
         self.curr_pose = np.array([0.0, 0,0])
+        self.roll = 0.0
+        self.pitch = 0.0
         self.phi = 0.0
 
     def _imu_data_subscriber_callback(self, imu_data_msg):
@@ -76,8 +78,9 @@ class Raw_Odometry:
         '''
 
         self.imu_data = imu_data_msg
-        [x, y, z, w] = [self.imu_data.orientation.x, self.imu_data.orientation.y, self.imu_data.orientation.z, self.imu_data.orientation.w]
-        [roll, pitch, yaw] = euler_from_quaternion([x, y, z, w])
+        [roll, pitch, yaw] = [self.imu_data.orientation.x, self.imu_data.orientation.y, self.imu_data.orientation.z]
+        self.roll = roll
+        self.pitch = pitch
         self.phi = yaw
 
 
@@ -150,13 +153,9 @@ class Raw_Odometry:
                 self.raw_odom_msg.pose.pose.position.y = self.curr_pose[1]
                 self.raw_odom_msg.pose.pose.position.z = 0.0
 
-                #Convert euler positions to quaternion
-                quaternion = quaternion_from_euler(0.0, 0.0, self.phi)
-
-                self.raw_odom_msg.pose.pose.orientation.x = quaternion[0]
-                self.raw_odom_msg.pose.pose.orientation.y = quaternion[1]
-                self.raw_odom_msg.pose.pose.orientation.z = quaternion[2]
-                self.raw_odom_msg.pose.pose.orientation.w = quaternion[3]
+                self.raw_odom_msg.pose.pose.orientation.x = self.roll
+                self.raw_odom_msg.pose.pose.orientation.y = self.pitch
+                self.raw_odom_msg.pose.pose.orientation.z = self.phi
 
                 self.raw_odom_msg.twist.twist.linear.x = self.velocity
 

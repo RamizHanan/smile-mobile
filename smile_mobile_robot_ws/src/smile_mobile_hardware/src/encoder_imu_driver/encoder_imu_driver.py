@@ -82,10 +82,22 @@ def main():
                     pitch = struct.unpack('<f', pitch)[0]
                     heading = enc_imu_serial.read(4)
                     heading = struct.unpack('<f', heading)[0]
+
                     #Convert heading to radians and measure it between -pi and pi
-                    #roll = (180.0 - roll) * (math.pi / 180.0)
-                    #pitch = (180.0 - pitch) * (math.pi / 180.0)
-                    #heading = (180.0 - heading) * (math.pi / 180.0)
+                    if(roll >= 180.0):
+                        roll = (roll - 360.0) * (math.pi / 180.0)
+                    else:
+                        roll = roll * (math.pi / 180.0)
+                    
+                    if(pitch >= 180.0):
+                        pitch = (pitch - 360.0) * (math.pi / 180.0)
+                    else:
+                        pitch = pitch * (math.pi / 180.0)
+                        
+                    if(heading  >= 180.0):       
+                        heading = (heading - 360.0) * (math.pi / 180.0)
+                    else:
+                        heading = heading * (math.pi / 180.0)
 
                     end_byte = hex(ord(enc_imu_serial.read(1)))
 

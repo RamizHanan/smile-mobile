@@ -46,7 +46,7 @@ catkin_package(
     CATKIN_DEPENDS roscpp
     rospy std_msgs message_runtime
     sensor_msgs geometry_msgs nav_msgs
-    actionlib_msgs
+    actionlib_msgs rosbridge_server
 )
 
 include_directories(
