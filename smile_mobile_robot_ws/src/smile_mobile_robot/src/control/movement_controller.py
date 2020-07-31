@@ -10,10 +10,10 @@ import rosparam
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float64, Int16MultiArray, Float32MultiArray
 from nav_msgs.msg import Odometry
-from tf.transformations import quaternion_from_euler, euler_from_quaternion
 import time
 from pid_controller import PID_Controller
 from smile_mobile_robot.srv import pid_gains, pid_gainsResponse
+from std_srvs.srv import SetBool, SetBoolResponse
 
 class Movement_Controller:
     """
@@ -53,6 +53,13 @@ class Movement_Controller:
         self.pwm_msg = Int16MultiArray()
 
         self.pid_timer = rospy.Rate(100) #100Hz
+
+        #Service to enable/disable the movement controller...only sends 0 pwm value.
+        self.movement_controller_enabled = True
+        rospy.Service('movement_controller/enabled', SetBool, self._movement_controller_state_callback)
+
+        #Get the maximum allowable PWM to send to the motors
+        self.max_pwm = rospy.get_param('/max_pwm')
 
         #Initialize publisher for writing PWM
         self.measured_velocity = 0.0
@@ -125,6 +132,32 @@ class Movement_Controller:
 
         return pid_gainsResponse()
 
+    def _movement_controller_state_callback(self, req):
+        '''
+        Callback function for the movement controller enable/disable service. If true,
+        the movement controller will make corrections to meet the desired speed and
+        steering direction with PID controller. Else if disabled, the controller will
+        simply send PWM values of [0, 0, 0, 0] to the motor driver.
+
+        Parameters:
+            req: The request message (bool) to enable/disable the motor. Type std_srvs/SetBool.
+        Returns:
+            response: A response with a string & bool notifiying if the request was valid. Type std_srvs/SetBoolResponse
+        '''
+        self.movement_controller_enabled = req.data
+        response = SetBoolResponse()
+        response.success = True
+
+        if(self.movement_controller_enabled):
+            response.message = "Movement Controller Enabled"
+        else:
+            response.message = "Movement Controller Disabled"
+            pwm_msg = Int16MultiArray; pwm_msg.data = [0, 0, 0, 0]
+            self.pwm_pub.publish(pwm_msg)
+
+        return  response
+
+
     def _odom_data_callback(self, odom_msg):
         '''
         Callback function for the measured odometry data estimated.
@@ -185,10 +218,10 @@ class Movement_Controller:
 
         pwms = [pwm_1, pwm_2, pwm_3, pwm_4]
         for i in range(4):
-            if(pwms[i] < -255):
-                pwms[i] = -255
-            elif(pwms[i] > 255):
-                pwms[i] = 255
+            if(pwms[i] < -self.max_pwm):
+                pwms[i] = -self.max_pwm
+            elif(pwms[i] > self.max_pwm):
+                pwms[i] = self.max_pwm
         return pwms
 
     def run(self):
@@ -208,18 +241,23 @@ class Movement_Controller:
         try:
             while not rospy.is_shutdown():
 
-                #Take the control effort output from PID controller and map to
-                #PID's of individual motor
-                self.velocity_control, velocity_error = self.velocity_pid_controller.update(self.desired_velocity, self.measured_velocity)
-                self.steering_control, steering_error = self.steering_pid_controller.update(self.desired_orientation, self.measured_orientation)
-                error_msg.data = [velocity_error, steering_error]
-                error_pub.publish(error_msg)
+                if self.movement_controller_enabled:
+                    #Take the control effort output from PID controller and map to
+                    #PID's of individual motor
+                    self.velocity_control, velocity_error = self.velocity_pid_controller.update(self.desired_velocity, self.measured_velocity)
+                    self.steering_control, steering_error = self.steering_pid_controller.update(self.desired_orientation, self.measured_orientation)
+                    error_msg.data = [velocity_error, steering_error]
+                    error_pub.publish(error_msg)
 
-                motor_pwms = self.map_control_efforts_to_pwms(self.velocity_control, -1*self.steering_control)
+                    motor_pwms = self.map_control_efforts_to_pwms(self.velocity_control, -1*self.steering_control)
 
 
-                self.pwm_msg.data = motor_pwms
-                self.pwm_pub.publish(self.pwm_msg)
+                    self.pwm_msg.data = motor_pwms#Send PWM command    
+                    self.pwm_pub.publish(self.pwm_msg)
+                else:
+                    self.pwm_msg.data = [0, 0, 0, 0] #Movement Controller disabled state
+
+                
 
                 #100Hz
                 self.pid_timer.sleep()

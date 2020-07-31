@@ -2,4 +2,5 @@ pid:
   steering: {k_d: 0.0, k_i: 24.9, k_p: 39.5}
   velocity: {k_d: 0.0, k_i: 0.0, k_p: 0.0}
 
+max_pwm: 100
 vehicle_params: {vehicle_width: 0.3048, wheel_radius: 0.066675}
