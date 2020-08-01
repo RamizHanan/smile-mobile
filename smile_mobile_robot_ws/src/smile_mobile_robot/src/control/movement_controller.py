@@ -103,8 +103,8 @@ class Movement_Controller:
                                                       k_d=steering_k_d,
                                                       max_control_effort=80,
                                                       min_control_effort=-80,
-                                                      integral_min=-10,
-                                                      integral_max=10,
+                                                      integral_min=-1,
+                                                      integral_max=1,
                                                       angle_error=True)
 
         #Initialize the service for updating the pid controller gains
@@ -152,7 +152,7 @@ class Movement_Controller:
             response.message = "Movement Controller Enabled"
         else:
             response.message = "Movement Controller Disabled"
-            pwm_msg = Int16MultiArray; pwm_msg.data = [0, 0, 0, 0]
+            pwm_msg = Int16MultiArray(); pwm_msg.data = [0, 0, 0, 0]
             self.pwm_pub.publish(pwm_msg)
 
         return  response

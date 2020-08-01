@@ -25,8 +25,8 @@ class image_capture:
 
         self.bridge = CvBridge()
 
-        #self.cv_capture = cv2.VideoCapture('v4l2src device=/dev/video0 ! video/x-raw, framerate=30/1, width=640, height=360 ! videoconvert ! appsink')
-        self.cv_capture = cv2.VideoCapture(1)
+        self.cv_capture = cv2.VideoCapture('v4l2src device=/dev/video0 ! video/x-raw, framerate=30/1, width=640, height=360 ! videoconvert ! appsink')
+        #self.cv_capture = cv2.VideoCapture(0)
         print('Initiated cam connection')
 
     def run(self):
