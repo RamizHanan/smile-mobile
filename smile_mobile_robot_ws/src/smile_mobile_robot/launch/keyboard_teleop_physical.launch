@@ -1,15 +1,15 @@
+<?xml version="1.6"?>
 <launch>
-
-  <!--Robot configuration file (must be loaded to run the following)-->
+  <!--Physical robot configurations file-->
   <rosparam file="$(find smile_mobile_robot)/config/smile_physical_robot.yaml" command="load"/>
-
-  <!--Launch the Odometry estimator and keyboard teleop control-->
+  <include file= "$(find smile_mobile_hardware)/launch/hardware.launch"/>
   <group ns="smile">
     <node name="raw_odometry" pkg="smile_mobile_robot" type="raw_odometry.py"/>
-        
-    <node name="keyboard_teleop" pkg="smile_mobile_robot" type="keyboard_teleop.py"/>
-    <node name="hardware_interface" pkg="smile_mobile_hardware" type="hardware_interface.py"/>
- 
- </group>
+    
+  </group>
+
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+    <arg name="port" value="9090"/>
+  </include>
 
 </launch>
