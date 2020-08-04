@@ -20,6 +20,10 @@ export default {
             right_pwm_raw : 0,
             left_pwm : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
             right_pwm : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+
+            motorsEnabled : true,
+            motors_enable_request_message : null,
+            motors_enable_service : null,
           }
     },
 
@@ -72,6 +76,16 @@ export default {
 
             this.pwm_message = new ROSLIB.Message({
                 data: [1, 2, 3, 4],
+            });
+
+            this.motors_enable_service = new ROSLIB.Service({
+                ros : this.ros,
+                name : '/smile/motors_enabled',
+                serviceType : 'std_srvs/SetBool'
+            })
+
+            this.motors_enable_request_message = new ROSLIB.ServiceRequest({
+                data : true
             })
             
         },
@@ -86,7 +100,18 @@ export default {
         this.camera = "data:image/jpg;base64," + message.data;
         },
 
+        motor_enable_service_response_callback : function(response){
+            console.log(response);
+        },
 
+        toggleMotorState : function(){
+            this.motorsEnabled = !this.motorsEnabled;
+            this.motors_enable_request_message.data = this.motorsEnabled;
+            this.motors_enable_service.callService(this.motors_enable_request_message,
+                this.motor_enable_service_response_callback);
+            
+            console.log("Setting Motor State to " + this.motorsEnabled);
+        },
         
     },
 }

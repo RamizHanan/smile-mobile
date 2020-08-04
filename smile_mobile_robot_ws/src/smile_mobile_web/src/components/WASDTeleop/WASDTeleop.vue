@@ -35,7 +35,7 @@
                 else if(key.keyCode === 68 /*d*/ && !(this.A)) {
                     this.D = true;
                 }
-                this.$emit('wasdCommand', this.W, this.A, this.S, this.D)
+                //this.$emit('wasdCommand', this.W, this.A, this.S, this.D)
             },
 
             onKeyUp : function(key) {
@@ -52,14 +52,21 @@
                     this.D = false;
                 }
 
-                this.$emit('wasdCommand', this.W, this.A, this.S, this.D)
+                //this.$emit('wasdCommand', this.W, this.A, this.S, this.D)
             },
 
+            //Continously sends the state of the W,A,S,D command.
+            repeatedUpdate : function(){
+                setInterval(() => {
+                    this.$emit('wasdCommand', this.W, this.A, this.S, this.D);
+                }, 100)
+            }
         }, 
 
         mounted() {
             document.addEventListener('keydown', this.onKeyDown)
             document.addEventListener('keyup', this.onKeyUp)
+            this.repeatedUpdate();
         },
 
         beforeDestroy() {

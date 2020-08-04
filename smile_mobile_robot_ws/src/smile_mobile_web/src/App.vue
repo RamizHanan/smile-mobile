@@ -15,7 +15,13 @@
             <OdometryDisplay v-bind:roll="roll" v-bind:pitch="pitch"  v-bind:yaw="yaw" />
           </v-col>
           <v-col>
-            <img :src="camera"/>
+            <img :src="camera" width="600" height="400"/>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col class="text-center">
+            <v-btn large v-on:click="toggleMotorState" color="error" v-if="motorsEnabled">Disable Motors</v-btn>
+            <v-btn large v-on:click="toggleMotorState" color="success" v-else>Enable Motors</v-btn>
           </v-col>
         </v-row>
       </v-container>
@@ -81,7 +87,7 @@
     },
 
     mounted () {
-      this.connect('ws://192.168.1.107:9090');
+      this.connect('ws://192.168.1.207:9090');
     },
   }
 </script>
