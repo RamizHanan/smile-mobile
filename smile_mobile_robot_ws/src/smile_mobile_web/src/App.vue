@@ -102,15 +102,15 @@ export default {
       var LR_pwmBR = 0;
 
       if (axes[2] >= 0.0) {
-        LR_pwmFL = 0;
-        LR_pwmBL = 0;
-        LR_pwmFR = axes[2] * 50;
-        LR_pwmBR = axes[2] * 50;
-      } else {
-        LR_pwmFL = 0 - axes[2] * 50;
-        LR_pwmBL = 0 - axes[2] * 50;
         LR_pwmFR = 0;
         LR_pwmBR = 0;
+        LR_pwmFL = axes[2] * 50;
+        LR_pwmBL = axes[2] * 50;
+      } else {
+        LR_pwmFR = 0 - axes[2] * 50;
+        LR_pwmBR = 0 - axes[2] * 50;
+        LR_pwmFL = 0;
+        LR_pwmBL = 0;
       }
       var total_pwmFL = FWBW_pwmFL + LR_pwmFL;
       var total_pwmBL = FWBW_pwmBL + LR_pwmBL;
@@ -136,7 +136,7 @@ export default {
         total_pwmBL = -100;
       }
 
-      this.pwm_message.data = [total_pwmFL, total_pwmFR, total_pwmBR, total_pwmBL];
+      this.pwm_message.data = [total_pwmFL | 0, total_pwmFR | 0, total_pwmBR | 0, total_pwmBL | 0];
       console.log(this.pwm_message.data);
       this.pwm_topic.publish(this.pwm_message);
       // console.log(buttons);
@@ -149,7 +149,7 @@ export default {
   },
 
   mounted() {
-    this.connect("ws://192.168.2.208:9090");
+    this.connect("ws://192.168.1.207:9090");
   },
 };
 </script>
