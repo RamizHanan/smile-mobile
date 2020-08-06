@@ -76,27 +76,71 @@ export default {
       this.right_pwm.shift();
       this.right_pwm.push(this.right_pwm_raw);
 
-      let left_sum = 0;
-      let right_sum = 0;
-      for (let i = 0; i < 10; i++) {
-        left_sum += this.left_pwm[i];
-        right_sum += this.right_pwm[i];
-      }
-      left_sum = left_sum / 10.0;
-      right_sum = right_sum / 10.0;
+      // let left_sum = 0;
+      // let right_sum = 0;
+      // for (let i = 0; i < 10; i++) {
+      //   left_sum += this.left_pwm[i];
+      //   right_sum += this.right_pwm[i];
+      // }
+      // left_sum = left_sum / 10.0;
+      // right_sum = right_sum / 10.0;
 
-      this.pwm_message.data = [left_sum, right_sum, right_sum, left_sum];
+      // this.pwm_message.data = [left_sum, right_sum, right_sum, left_sum];
+      // console.log(this.pwm_message.data);
+      // this.pwm_topic.publish(this.pwm_message);
+    },
+    receiveJOY: function(buttons, axes) {
+      
+      var FWBW_pwmFL = -1 * axes[1] * 75;
+      var FWBW_pwmBL = -1 * axes[1] * 75;
+      var FWBW_pwmFR = -1 * axes[1] * 75;
+      var FWBW_pwmBR = -1 * axes[1] * 75;
+
+      var LR_pwmFL = 0;
+      var LR_pwmBL = 0;
+      var LR_pwmFR = 0;
+      var LR_pwmBR = 0;
+
+      if (axes[2] >= 0.0) {
+        LR_pwmFL = 0;
+        LR_pwmBL = 0;
+        LR_pwmFR = axes[2] * 50;
+        LR_pwmBR = axes[2] * 50;
+      } else {
+        LR_pwmFL = 0 - axes[2] * 50;
+        LR_pwmBL = 0 - axes[2] * 50;
+        LR_pwmFR = 0;
+        LR_pwmBR = 0;
+      }
+      var total_pwmFL = FWBW_pwmFL + LR_pwmFL;
+      var total_pwmBL = FWBW_pwmBL + LR_pwmBL;
+      var total_pwmFR = FWBW_pwmFR + LR_pwmFR;
+      var total_pwmBR = FWBW_pwmBR + LR_pwmBR;
+
+      if (buttons[1]) {
+        total_pwmFL = 0;
+        total_pwmBL = 0;
+        total_pwmFR = 0;
+        total_pwmBR = 0;
+      }
+      if (buttons[5]) {
+        total_pwmFR = -100;
+        total_pwmBR = -100;
+        total_pwmFL = 100;
+        total_pwmBL = 100;
+      }
+      if (buttons[4]) {
+        total_pwmFR = 100;
+        total_pwmBR = 100;
+        total_pwmFL = -100;
+        total_pwmBL = -100;
+      }
+
+      this.pwm_message.data = [total_pwmFL, total_pwmFR, total_pwmBR, total_pwmBL];
       console.log(this.pwm_message.data);
       this.pwm_topic.publish(this.pwm_message);
-    },
-    receiveJOY: function(buttonValue,axes) {
-
-      this.joy_message.buttons = buttonValue;
-      this.joy_message.axes = axes;
-      
-      console.log(this.joy_message.buttons);
-      console.log(this.joy_message.axes);
-      this.joy_publisher.publish(this.joy_message);
+      // console.log(buttons);
+      // console.log(axes);
     },
   },
 
@@ -105,7 +149,7 @@ export default {
   },
 
   mounted() {
-    this.connect("ws://192.168.1.107:9090");
+    this.connect("ws://192.168.2.208:9090");
   },
 };
 </script>
