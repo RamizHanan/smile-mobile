@@ -42,8 +42,6 @@ source /usr/share/gazebo/setup.sh
 export GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:~/smile-mobile/smile_mobile_sim_ws/src/smile_mobile_gazebo/models/
 ```
 
-Note: For some users, it maybe necessary to run **chmod +x [Executable].py** for any executable python scripts in the package.
-
 ### Launching the Gazebo Simulation
 
 Launching the Smile Mobile Robot in Gazebo simulation can all be done by running the following launch file within the package **smile_mobile_robot**. This simulation launchs the necessary simulation artifacts for gazebo alongside the robots movement controllers and raw odometry estimation.
@@ -64,5 +62,37 @@ The position estimated by the raw odometry node can viewed with the **Position_P
 ```cmd
 rosrun smile_mobile_gui Position_Plotter
 ```
+
+### Physcial Vehicle
+Most of the same software that was used to run the simulated vehicle will also be used for the physical vehicle. The physcial vehicle does not require any of the Gazebo related software. However, the physical vehicle requires running various hardware drivers to communicate with the onboard sensors and actuators.
+
+### Flashing the Hardware Code
+
+If necessary, flash the encoder_imu_driver and motor_driver Arduino software to their respective boards on the physical vehicle. These arduino drivers are located within the package **smile_mobile_hardward**.
+
+### Launching the code on the physcial vehicle.
+To launch the code on the physical vehicle, after all the batteries are plugged in and the hardware is powered up, SSH into the onboard computer and run the launch scripts. Note, it is important to have static IP. Once SSHed in, run one of the following
+
+```cmd
+//Use movement controller with PID's to hold velocity and steering angle
+roslaunch smile_mobile_robot main_physical.launch 
+
+OR
+
+//Simply except PWM (typically from web gui) to manually control the vehicle
+roslaunch smile_mobile_robot keyboard_teleop_physical.launch
+```
+
+### Launching the Web GUI
+On the host computer (that you are using to SSH into the vehicle), you can interface with the vehicle via the Web GUI built using the Vue framework with ROSLIBjs.
+Within the **smile_mobile_web** directory run.
+
+```
+//The comman web package manager is used to start a server to run the web app.
+npm serve run
+```
+
+To via the Web GUI in the browser, copy the localhost url shown in the output of running the previous command.
+
 
 Note: If any issues are discovered, please set an issue inquiry in the github **issues** tab for this repo. Thanks!
