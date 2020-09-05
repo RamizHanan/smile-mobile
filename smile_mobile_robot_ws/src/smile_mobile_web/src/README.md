@@ -10,7 +10,7 @@ Entry point for the project. This is where Vue and Vuetify are imported and inst
 
 Connection to ROS WebServer and creation of publishers and subscribers as well as callback functions are handled here.  
 
-```
+```javascript
 // Connect to the IMU data (Odometry)
   
 this.imu_subscriber = new ROSLIB.Topic(
@@ -41,12 +41,12 @@ This component is responsible for displaying IMU data including roll, pitch, and
 
 Video footage is acquired by subscribing to the compressed image topic coming from physical camera. This can be extended to switch to simulation video by subscribing to the appropriate topic.
 
-```
+```html
 // App.vue
   
 <img :src="camera" width="600" height="400" />
 ```
-```
+```javascript
 // rosmixin.js
 
 // Connect to the Image data 
@@ -68,7 +68,7 @@ image_topic_callback: function(message) {
 ## [WASD Teleop](https://github.com/RamizHanan/smile-mobile/blob/development/smile_mobile_robot_ws/src/smile_mobile_web/src/components/WASDTeleop/WASDTeleop.vue)
 Keyboard buttons may be used to control the vehicle, although using a joystick is much easier recommended.
 
-```
+```javascript
 W - Forward
 A - Left
 S - Backward
