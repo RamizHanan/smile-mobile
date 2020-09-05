@@ -1,4 +1,4 @@
-# Vue Web Component Overview
+# Smile-Mobile Web Component Overview
 
 ## [main.js](https://github.com/RamizHanan/smile-mobile/blob/development/smile_mobile_robot_ws/src/smile_mobile_web/src/main.js)
 
