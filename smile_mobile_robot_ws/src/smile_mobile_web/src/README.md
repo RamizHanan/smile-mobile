@@ -36,7 +36,7 @@ Currently it consists of:
 ## [Odometry Display](https://github.com/RamizHanan/smile-mobile/blob/development/smile_mobile_robot_ws/src/smile_mobile_web/src/components/OdometryDisplay/OdometryDisplay.vue)
 
 This component is responsible for displaying IMU data including roll, pitch, and yaw in degrees as they are captured from the sensor.
-* [Insert Image here]
+![Image of Odometry](https://github.com/RamizHanan/smile-mobile/blob/documentation/smile_mobile_robot_ws/src/smile_mobile_web/src/components/OdometryDisplay/odometry.PNG)
 ## Camera Display
 
 Video footage is acquired by subscribing to the compressed image topic coming from physical camera. This can be extended to switch to simulation video by subscribing to the appropriate topic.
