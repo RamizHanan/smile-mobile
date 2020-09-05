@@ -66,7 +66,7 @@ export default {
         messageType: "sensor_msgs/Joy",
       });
 
-      this.joy_message = new ROSLIB.Message({axes : [], buttons : []});
+      this.joy_message = new ROSLIB.Message({ axes: [], buttons: [] });
       //
       this.image_topic = new ROSLIB.Topic({
         ros: this.ros,

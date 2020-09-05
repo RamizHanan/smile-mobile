@@ -1,5 +1,6 @@
 <template>
   <v-app id="inspire">
+
     <v-app-bar app clipped-left>
       <v-toolbar-title>SMILE Robotics</v-toolbar-title>
     </v-app-bar>
@@ -34,20 +35,21 @@
         </v-row>
       </v-container>
       <WASDTeleop v-on:wasdCommand="receiveWASD" />
-      <Joystick v-on:joyCommand="receiveJOY" />
+      <JoystickTeleop v-on:joyCommand="receiveJOY" />
     </v-main>
 
     <v-footer app>
       <span>&copy; {{ new Date().getFullYear() }}</span>
     </v-footer>
+
   </v-app>
 </template>
-
 <script>
-import OdometryDisplay from "@/components/OdometryDisplay";
+
+import OdometryDisplay from "@/components/OdometryDisplay/OdometryDisplay";
 import ros_mixin from "./ros_mixin.js";
 import WASDTeleop from "@/components/WASDTeleop/WASDTeleop";
-import Joystick from "@/components/Joystick/Joystick";
+import JoystickTeleop from "@/components/JoystickTeleop/JoystickTeleop";
 
 export default {
   props: {
@@ -56,14 +58,15 @@ export default {
 
   /*
     ros_mixin contains the connections with getting and receiving information
-    from ros.
-    */
+    from ros. Available for all components.
+  */
+  
   mixins: [ros_mixin],
 
   components: {
     OdometryDisplay,
     WASDTeleop,
-    Joystick,
+    JoystickTeleop,
   },
 
   methods: {
@@ -75,22 +78,9 @@ export default {
       this.left_pwm.push(this.left_pwm_raw);
       this.right_pwm.shift();
       this.right_pwm.push(this.right_pwm_raw);
-
-      // let left_sum = 0;
-      // let right_sum = 0;
-      // for (let i = 0; i < 10; i++) {
-      //   left_sum += this.left_pwm[i];
-      //   right_sum += this.right_pwm[i];
-      // }
-      // left_sum = left_sum / 10.0;
-      // right_sum = right_sum / 10.0;
-
-      // this.pwm_message.data = [left_sum, right_sum, right_sum, left_sum];
-      // console.log(this.pwm_message.data);
-      // this.pwm_topic.publish(this.pwm_message);
     },
+
     receiveJOY: function(buttons, axes) {
-      
       var FWBW_pwmFL = -1 * axes[1] * 75;
       var FWBW_pwmBL = -1 * axes[1] * 75;
       var FWBW_pwmFR = -1 * axes[1] * 75;
@@ -136,11 +126,14 @@ export default {
         total_pwmBL = -100;
       }
 
-      this.pwm_message.data = [total_pwmFL | 0, total_pwmFR | 0, total_pwmBR | 0, total_pwmBL | 0];
+      this.pwm_message.data = [
+        total_pwmFL | 0,
+        total_pwmFR | 0,
+        total_pwmBR | 0,
+        total_pwmBL | 0,
+      ];
       console.log(this.pwm_message.data);
       this.pwm_topic.publish(this.pwm_message);
-      // console.log(buttons);
-      // console.log(axes);
     },
   },
 

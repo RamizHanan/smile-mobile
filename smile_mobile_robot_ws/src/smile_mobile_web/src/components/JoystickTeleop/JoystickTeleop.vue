@@ -4,12 +4,11 @@
 
 <script>
 export default {
-  name: "Joystick",
+  name: "JoystickTeleop",
   props: {},
   data: function() {
     return {
       controllers: {},
-      turbo: false,
       buttonValue: [],
       buttonState: [],
       axes: [],
@@ -40,8 +39,6 @@ export default {
 
       for (j in this.controllers) {
         var controller = this.controllers[j];
-        // this.buttons = controller.buttons.slice(0);
-        // this.axes = controller.axes.slice(0);
 
         for (var i = 0; i < controller.buttons.length; i++) {
           this.buttonState[i] = controller.buttons[i].pressed;
@@ -49,8 +46,6 @@ export default {
         }
 
         this.axes = controller.axes.slice(0);
-        // console.log("axis:" + this.axes);
-        // console.log("button value:" + this.buttonValue);
       }
       var date = new Date();
       this.timestamp = date.getTime();
@@ -73,17 +68,14 @@ export default {
         }
       }
     },
-    updateJoystick : function(){
+    updateJoystick: function() {
       if (!this.haveEvents) {
-      setInterval(() => {
-      this.scangamepads;
-      this.$emit(
-        "joyCommand",
-        this.buttonValue,
-        this.axes,
-      );
-      }, 10);
-    }}
+        setInterval(() => {
+          this.scangamepads;
+          this.$emit("joyCommand", this.buttonValue, this.axes);
+        }, 10);
+      }
+    },
   },
   mounted() {
     this.haveEvents = "ongamepadconnected" in window;
@@ -91,8 +83,7 @@ export default {
 
     window.addEventListener("gamepadconnected", this.connecthandler);
     window.addEventListener("gamepaddisconnected", this.disconnecthandler);
-    this.updateJoystick();
-    
+    this.updateJoystick(); // joystick update loop
   },
 
   beforeDestroy() {
