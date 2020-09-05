@@ -8,7 +8,7 @@ Entry point for the project. This is where Vue and Vuetify are imported and inst
 
 [Vue Mixin](https://vuejs.org/v2/guide/mixins.html) was used to keep the shared ROS data in one place and use-able across all components.
 
-Connection to ROS WebServer and creation of publishers and subscribers as well as callback functions are handled here.  
+Connection to ROS WebServer and creation of publishers and subscribers as well as callback functions are handled here. Define all attributes in data function and all needed functions in the methods section. Connect() establishes connection with ros websocket instantiates all topics and pubs/subs.
 
 ```javascript
 // Connect to the IMU data (Odometry)
@@ -32,18 +32,19 @@ Currently it consists of:
 * Camera Display
 * WASD Keyoard Teleop
 * Joystick Teleop
+* Kill Button
 
 ## [Odometry Display](https://github.com/RamizHanan/smile-mobile/blob/development/smile_mobile_robot_ws/src/smile_mobile_web/src/components/OdometryDisplay/OdometryDisplay.vue)
 
 This component is responsible for displaying IMU data including roll, pitch, and yaw in degrees as they are captured from the sensor.
 ![Image of Odometry](https://github.com/RamizHanan/smile-mobile/blob/documentation/smile_mobile_robot_ws/src/smile_mobile_web/src/components/OdometryDisplay/odometry.PNG)
-## Camera Display
+## [Camera Display](https://github.com/RamizHanan/smile-mobile/blob/development/smile_mobile_robot_ws/src/smile_mobile_web/src/App.vue)
 
 Video footage is acquired by subscribing to the compressed image topic coming from physical camera. This can be extended to switch to simulation video by subscribing to the appropriate topic.
 
-```html
+```javascript
 // App.vue
-  
+
 <img :src="camera" width="600" height="400" />
 ```
 ```javascript
