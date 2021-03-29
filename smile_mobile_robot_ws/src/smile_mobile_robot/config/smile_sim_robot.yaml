@@ -1,0 +1,38 @@
+
+pid:
+  steering: {k_d: 0.0, k_i: 0.0, k_p: 630.0}
+  velocity: {k_d: 0.0, k_i: 810.0, k_p: 0.0}
+
+vehicle_params: {vehicle_width: 0.6858, wheel_radius: 0.20574}
+
+vision_params:
+  lane_detector:
+    sobel_x_thresh: [30, 255]
+    sat_thresh: [10, 255]
+    num_windows: 9
+    margin: 150
+    min_lane_pix: 2
+    center_line: 600
+    center_line_region: [50, 50]
+    src_roi: [[0.35, 0.60], [0.65, 0.60], [0, 0.8], [1, 0.8]]
+    img_size: [800, 800]
+    min_lane_candidate_pix: 7000
+    num_trajectory_points: 4
+    meter_per_pixel: 0.0031
+    vertical_pixel_offset: 403
+
+  lane_follower:
+    pid:
+      k_p: 0.002
+      k_i: 0.00
+      k_d: 0.0
+      integral_min: -100
+      integral_max: 100
+      max_control_effort: 1.0
+      min_control_effort: -1.0
+
+motion_planner_params:
+  max_velocity: 0.5
+  success_pos_tolerance: 0.1
+  success_pos_timeout: 10
+  relative_angle_limit: 0.78539

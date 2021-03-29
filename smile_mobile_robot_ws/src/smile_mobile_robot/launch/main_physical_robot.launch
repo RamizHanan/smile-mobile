@@ -1,0 +1,16 @@
+<?xml version="1.6"?>
+<launch>
+  <!--Physical robot configurations file-->
+  <rosparam file="$(find smile_mobile_robot)/config/smile_physical_robot.yaml" command="load"/>
+  <include file= "$(find smile_mobile_hardware)/launch/hardware.launch"/>
+  <group ns="smile">
+    <node name="raw_odometry" pkg="smile_mobile_robot" type="raw_odometry.py"/>
+    
+    <node name="movement_controller" pkg="smile_mobile_robot" type="movement_controller.py"/>
+
+  </group>
+
+  <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch" >
+    <arg name="port" value="9090"/>
+  </include>
+</launch>
