@@ -9,7 +9,7 @@ The second workspace is the simulation workspace which is contained in the **smi
 Each of the workspaces contain ROS packages for various functions.
 
 ## Pre-requisites
-- You can refer to the parts list here: https://docs.google.com/spreadsheets/d/1tkz2NcTEdIRbpvMm4ST251BudDWzXF8HeTS0Ko5c5h0/edit#gid=0
+- You can refer to the parts list here: https://docs.google.com/spreadsheets/d/1tkz2NcTEdIRbpvMm4ST251BudDWzXF8HeTS0Ko5c5h0/edit#gid=0 and the vehicle schematic here https://github.com/RamizHanan/smile-mobile/blob/master/doc/smile_schematic.pdf
 - Make sure you have Ubuntu 18.04 and ROS Melodic installed on the system you want to run the code on: http://wiki.ros.org/melodic/Installation
 - For vision we use Logitech C920 with V4L2-CTL command line interface. Refer to this for manual settings: https://www.kurokesu.com/main/2016/01/16/manual-usb-camera-settings-in-linux/
 - For the Web GUI we use Vue Cli with npm which requires node.js. Refer to this for installation: https://cli.vuejs.org/guide/installation.html
